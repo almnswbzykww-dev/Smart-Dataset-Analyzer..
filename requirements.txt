@@ -1,0 +1,7 @@
+# Core Runtime (offline_app.py, online_app.py, python_core/, build_editions.py)
+# Uses Python 3.11+ standard library only (zero external packages required).
+
+# Optional Desktop Tkinter & Binary Packaging (app.py + PyInstaller .spec builds)
+pandas>=2.0.0
+matplotlib>=3.7.0
+pyinstaller>=6.0.0

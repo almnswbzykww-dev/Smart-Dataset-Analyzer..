@@ -1,0 +1,152 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==================== GLOBAL DEFAULT DENY SAFETY NET ====================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ==================== PRIMITIVE HELPERS ====================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // ==================== ENTITY VALIDATION BLUEPRINTS ====================
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'displayName', 'email', 'provider', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'email', 'phone', 'provider', 'createdAt', 'updatedAt'])
+        && data.uid is string && data.uid == userId && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 120
+        && data.email is string && data.email.size() <= 200
+        && (!('phone' in data) || (data.phone is string && data.phone.size() <= 32))
+        && data.provider is string && data.provider.size() >= 1 && data.provider.size() <= 40
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCompanySettings(data, userId) {
+      return data.keys().hasAll(['ownerId', 'companyName', 'location', 'address', 'logoDataUrl', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'companyName', 'location', 'address', 'logoDataUrl', 'updatedAt'])
+        && data.ownerId is string && data.ownerId == userId && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.companyName is string && data.companyName.size() <= 160
+        && data.location is string && data.location.size() <= 160
+        && data.address is string && data.address.size() <= 300
+        && data.logoDataUrl is string && data.logoDataUrl.size() <= 262144
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSavedAnalysis(data, userId) {
+      return data.keys().hasAll([
+          'ownerId', 'title', 'pageType', 'datasetName', 'xCol', 'yCol',
+          'chartType', 'aggMode', 'rowCount', 'colCount', 'summaryText', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'title', 'pageType', 'datasetName', 'xCol', 'yCol',
+          'chartType', 'aggMode', 'rowCount', 'colCount', 'summaryText', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId is string && data.ownerId == userId && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.pageType is string && data.pageType in ['dashboard', 'studio', 'stats', 'details', 'reports', 'loader']
+        && data.datasetName is string && data.datasetName.size() >= 1 && data.datasetName.size() <= 160
+        && data.xCol is string && data.xCol.size() >= 1 && data.xCol.size() <= 120
+        && data.yCol is string && data.yCol.size() >= 1 && data.yCol.size() <= 120
+        && data.chartType is string && data.chartType in ['Bar', 'Line', 'Pie', 'Scatter', 'Histogram', 'Box Plot']
+        && data.aggMode is string && data.aggMode in ['sum', 'avg', 'count', 'max', 'min']
+        && data.rowCount is number && data.rowCount >= 0 && data.rowCount <= 10000000
+        && data.colCount is number && data.colCount >= 0 && data.colCount <= 10000
+        && data.summaryText is string && data.summaryText.size() <= 2000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // ==================== COLLECTION RULES ====================
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'phone', 'provider', 'updatedAt']);
+
+      allow delete: if isValidId(userId) && isOwner(userId);
+
+      // Subcollection: Company Settings
+      match /companySettings/{settingId} {
+        allow get: if isValidId(userId) && isValidId(settingId) && isOwner(userId) && settingId == 'profile';
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isValidId(userId)
+          && isValidId(settingId)
+          && settingId == 'profile'
+          && isOwner(userId)
+          && isValidCompanySettings(incoming(), userId)
+          && incoming().updatedAt == request.time;
+
+        allow update: if isValidId(userId)
+          && isValidId(settingId)
+          && settingId == 'profile'
+          && isOwner(userId)
+          && isValidCompanySettings(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['companyName', 'location', 'address', 'logoDataUrl', 'updatedAt']);
+
+        allow delete: if isValidId(userId) && isValidId(settingId) && isOwner(userId);
+      }
+
+      // Subcollection: Saved Analyses
+      match /savedAnalyses/{analysisId} {
+        allow get: if isValidId(userId) && isValidId(analysisId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isValidId(userId)
+          && isValidId(analysisId)
+          && isOwner(userId)
+          && isValidSavedAnalysis(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+
+        allow update: if isValidId(userId)
+          && isValidId(analysisId)
+          && isOwner(userId)
+          && isValidSavedAnalysis(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'pageType', 'datasetName', 'xCol', 'yCol',
+            'chartType', 'aggMode', 'rowCount', 'colCount', 'summaryText', 'updatedAt'
+          ]);
+
+        allow delete: if isValidId(userId) && isValidId(analysisId) && isOwner(userId);
+      }
+    }
+  }
+}

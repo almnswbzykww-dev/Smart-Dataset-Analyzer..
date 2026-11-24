@@ -1,0 +1,399 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-cairo: "Cairo", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-emeraldos-950: #01120c;
+  --color-emeraldos-900: #032117;
+  --color-emeraldos-800: #063626;
+  --color-emeraldos-700: #0a4f38;
+  --color-emeraldos-600: #106e4f;
+  --color-emeraldos-500: #148b64;
+  --color-emeraldos-400: #1ab381;
+
+  --color-platgold-100: #fcf8e3;
+  --color-platgold-200: #f7edbc;
+  --color-platgold-300: #efdb8a;
+  --color-platgold-400: #e2c974;
+  --color-platgold-500: #c5a059;
+  --color-platgold-600: #9b7b38;
+  --color-platgold-700: #6d5423;
+}
+
+@layer base {
+  * {
+    font-family: "Cairo", system-ui, -apple-system, sans-serif;
+    box-sizing: border-box;
+  }
+
+  body {
+    background: #010b0e;
+    color: #f8fafc;
+    overflow: hidden;
+  }
+
+  code,
+  pre,
+  .font-mono,
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(1, 18, 12, 0.45);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #148b64, #c5a059);
+  border-radius: 8px;
+}
+
+.emerald-wallpaper {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(20, 139, 100, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 88% 82%, rgba(197, 160, 89, 0.2) 0%, transparent 45%),
+    radial-gradient(circle at 50% 45%, rgba(6, 78, 92, 0.35) 0%, transparent 65%),
+    linear-gradient(135deg, #010a0c 0%, #031e1b 50%, #021210 100%);
+}
+
+.platgold-gradient {
+  background: linear-gradient(135deg, #fcf8e3 0%, #e2c974 45%, #c5a059 100%);
+  box-shadow: 0 4px 18px rgba(197, 160, 89, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.7);
+}
+
+.platgold-gradient:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #efdb8a 50%, #d4af37 100%);
+  box-shadow: 0 6px 24px rgba(226, 201, 116, 0.42), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.emerald-glow-border {
+  border: 1px solid rgba(197, 160, 89, 0.32);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8), 0 0 28px rgba(20, 139, 100, 0.18);
+}
+
+.glass-panel-emerald {
+  background: linear-gradient(165deg, rgba(3, 33, 28, 0.94) 0%, rgba(1, 16, 15, 0.98) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(197, 160, 89, 0.25);
+}
+
+.chart-surface-light {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 14px;
+  border: 2px solid #e2e8f0;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.9), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Light Auth Analytics Backdrop */
+.auth-analytics-bg {
+  background:
+    radial-gradient(circle at 12% 15%, rgba(16, 185, 129, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 88% 20%, rgba(14, 165, 233, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 50% 90%, rgba(217, 119, 6, 0.08) 0%, transparent 50%),
+    linear-gradient(160deg, #f8fafc 0%, #eff6f5 48%, #f1f5f9 100%);
+}
+
+/* Cinematic Data Analytics Animations */
+@keyframes cinemaPulse {
+  0%, 100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.14) translate(-20px, 14px);
+    opacity: 0.85;
+  }
+}
+
+@keyframes cinemaFloatY {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes cinemaFloatYReverse {
+  0%, 100% {
+    transform: translateY(-6px);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes cinemaSpinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes cinemaSpinReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes barGrow1 {
+  0%, 100% {
+    transform: scaleY(0.68);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes barGrow2 {
+  0%, 100% {
+    transform: scaleY(0.95);
+  }
+  50% {
+    transform: scaleY(0.55);
+  }
+}
+
+@keyframes barGrow3 {
+  0%, 100% {
+    transform: scaleY(0.55);
+  }
+  50% {
+    transform: scaleY(0.92);
+  }
+}
+
+@keyframes linePulse {
+  0%, 100% {
+    stroke-dashoffset: 0;
+    opacity: 0.85;
+  }
+  50% {
+    stroke-dashoffset: -28;
+    opacity: 1;
+  }
+}
+
+.cinema-orb-1 {
+  animation: cinemaPulse 11s ease-in-out infinite;
+}
+
+.cinema-orb-2 {
+  animation: cinemaPulse 15s ease-in-out infinite reverse;
+}
+
+.cinema-card-a {
+  animation: cinemaFloatY 7s ease-in-out infinite;
+}
+
+.cinema-card-b {
+  animation: cinemaFloatYReverse 8.5s ease-in-out infinite;
+}
+
+.cinema-ring-cw {
+  animation: cinemaSpinSlow 46s linear infinite;
+}
+
+.cinema-ring-ccw {
+  animation: cinemaSpinReverse 62s linear infinite;
+}
+
+.bar-anim-1 {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: barGrow1 3.4s ease-in-out infinite;
+}
+
+.bar-anim-2 {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: barGrow2 4.1s ease-in-out infinite;
+}
+
+.bar-anim-3 {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: barGrow3 3.7s ease-in-out infinite;
+}
+
+.line-anim {
+  stroke-dasharray: 8 6;
+  animation: linePulse 5s linear infinite;
+}
+
+/* Red Ruby Gemstone Animations (Compositor-Only) */
+@keyframes rubyGemFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(-2deg) scale(1);
+  }
+  50% {
+    transform: translateY(-6px) rotate(2deg) scale(1.06);
+  }
+}
+
+@keyframes rubyGlowPulse {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(1.08);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.28);
+  }
+}
+
+@keyframes rubyShimmerSweep {
+  0% {
+    transform: translateX(-80px) skewX(-24deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.95;
+  }
+  55% {
+    transform: translateX(185px) skewX(-24deg);
+    opacity: 0.95;
+  }
+  65%, 100% {
+    transform: translateX(185px) skewX(-24deg);
+    opacity: 0;
+  }
+}
+
+@keyframes rubySparkle {
+  0%, 100% {
+    transform: scale(0.35) rotate(0deg);
+    opacity: 0.25;
+  }
+  50% {
+    transform: scale(1.15) rotate(45deg);
+    opacity: 1;
+  }
+}
+
+.ruby-gem-float {
+  animation: rubyGemFloat 3.6s ease-in-out infinite;
+}
+
+.ruby-glow-pulse {
+  animation: rubyGlowPulse 2.8s ease-in-out infinite;
+}
+
+.ruby-shimmer-band {
+  animation: rubyShimmerSweep 2.6s ease-in-out infinite;
+}
+
+.ruby-sparkle-1 {
+  animation: rubySparkle 1.9s ease-in-out infinite;
+}
+
+.ruby-sparkle-2 {
+  animation: rubySparkle 2.3s ease-in-out 0.6s infinite;
+}
+
+.ruby-sparkle-3 {
+  animation: rubySparkle 2.1s ease-in-out 1.1s infinite;
+}
+
+@keyframes spectrumHueShift {
+  0%, 100% {
+    filter: hue-rotate(0deg);
+    opacity: 0.92;
+  }
+  50% {
+    filter: hue-rotate(28deg);
+    opacity: 1;
+  }
+}
+
+.spectrum-lines-anim {
+  animation: spectrumHueShift 9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spectrum-lines-anim,
+  .ruby-gem-float,
+  .ruby-glow-pulse,
+  .ruby-shimmer-band,
+  .ruby-sparkle-1,
+  .ruby-sparkle-2,
+  .ruby-sparkle-3,
+  .cinema-orb-1,
+  .cinema-orb-2,
+  .cinema-card-a,
+  .cinema-card-b,
+  .cinema-ring-cw,
+  .cinema-ring-ccw,
+  .bar-anim-1,
+  .bar-anim-2,
+  .bar-anim-3,
+  .line-anim {
+    animation: none !important;
+  }
+}
+
+/* Print Rules */
+@media print {
+  html,
+  body,
+  #root {
+    height: auto !important;
+    min-height: 0 !important;
+    width: auto !important;
+    overflow: visible !important;
+    position: static !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  .h-screen,
+  .w-screen,
+  .overflow-hidden,
+  .overflow-y-auto,
+  .overflow-auto {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  #printPreviewBackdrop {
+    position: static !important;
+    inset: auto !important;
+    height: auto !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  #printPreviewCard {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  #printableSheet {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+}

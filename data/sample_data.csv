@@ -1,0 +1,13 @@
+Month,Branch,Category,Sales,Profit,Cost,Orders,Rating
+Jan,Sanaa,Electronics,125000,35000,90000,320,4.7
+Feb,Sanaa,Software,142000,48000,94000,410,4.8
+Mar,Aden,Electronics,98000,24000,74000,260,4.5
+Apr,Aden,Services,112000,36000,76000,295,4.6
+May,Taiz,Software,89000,31000,58000,230,4.4
+Jun,Taiz,Electronics,134000,41000,93000,350,4.7
+Jul,Hadramout,Services,118000,39000,79000,310,4.6
+Aug,Hadramout,Software,156000,54000,102000,440,4.9
+Sep,Ibb,Electronics,76000,19000,57000,190,4.2
+Oct,Ibb,Services,94000,28000,66000,245,4.5
+Nov,Sanaa,Software,168000,61000,107000,475,4.9
+Dec,Aden,Electronics,149000,45000,104000,390,4.8

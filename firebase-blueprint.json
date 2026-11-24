@@ -1,0 +1,188 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user account profile and contact metadata.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Full display name of the user.",
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User email address.",
+          "maxLength": 200
+        },
+        "phone": {
+          "type": "string",
+          "description": "Optional phone number.",
+          "maxLength": 32
+        },
+        "provider": {
+          "type": "string",
+          "description": "Authentication provider identifier.",
+          "maxLength": 40
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp."
+        }
+      },
+      "required": ["uid", "displayName", "email", "provider", "createdAt", "updatedAt"]
+    },
+    "CompanySettings": {
+      "title": "CompanySettings",
+      "description": "Company identity details and logo prepended to printed reports, data tables, and charts.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owner.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "companyName": {
+          "type": "string",
+          "description": "Official company or organization name.",
+          "maxLength": 160
+        },
+        "location": {
+          "type": "string",
+          "description": "City, region, or branch location.",
+          "maxLength": 160
+        },
+        "address": {
+          "type": "string",
+          "description": "Detailed street or office address.",
+          "maxLength": 300
+        },
+        "logoDataUrl": {
+          "type": "string",
+          "description": "Compressed PNG/JPEG Data URL for the company logo (max 262144 chars).",
+          "maxLength": 262144
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp."
+        }
+      },
+      "required": ["ownerId", "companyName", "location", "address", "logoDataUrl", "updatedAt"]
+    },
+    "SavedAnalysis": {
+      "title": "SavedAnalysis",
+      "description": "Saved dataset analysis snapshot, chart configuration, and summary metrics.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owner.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Analysis title.",
+          "maxLength": 160
+        },
+        "pageType": {
+          "type": "string",
+          "enum": ["dashboard", "studio", "stats", "details", "reports", "loader"],
+          "description": "Workspace page type."
+        },
+        "datasetName": {
+          "type": "string",
+          "description": "Source CSV/JSON dataset filename.",
+          "maxLength": 160
+        },
+        "xCol": {
+          "type": "string",
+          "description": "Selected X axis column.",
+          "maxLength": 120
+        },
+        "yCol": {
+          "type": "string",
+          "description": "Selected Y axis column.",
+          "maxLength": 120
+        },
+        "chartType": {
+          "type": "string",
+          "enum": ["Bar", "Line", "Pie", "Scatter", "Histogram", "Box Plot"],
+          "description": "Selected chart type."
+        },
+        "aggMode": {
+          "type": "string",
+          "enum": ["sum", "avg", "count", "max", "min"],
+          "description": "Aggregation mode."
+        },
+        "rowCount": {
+          "type": "number",
+          "description": "Total dataset row count."
+        },
+        "colCount": {
+          "type": "number",
+          "description": "Total dataset column count."
+        },
+        "summaryText": {
+          "type": "string",
+          "description": "Concise computed analysis summary.",
+          "maxLength": 2000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp."
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "pageType",
+        "datasetName",
+        "xCol",
+        "yCol",
+        "chartType",
+        "aggMode",
+        "rowCount",
+        "colCount",
+        "summaryText",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profile document containing PII, restricted strictly to the authenticated owner."
+    },
+    "/users/{userId}/companySettings/{settingId}": {
+      "schema": { "$ref": "#/entities/CompanySettings" },
+      "description": "Per-user company branding settings (name, location, address, compressed logo)."
+    },
+    "/users/{userId}/savedAnalyses/{analysisId}": {
+      "schema": { "$ref": "#/entities/SavedAnalysis" },
+      "description": "Per-user saved dataset analyses, chart settings, and report summaries."
+    }
+  }
+}

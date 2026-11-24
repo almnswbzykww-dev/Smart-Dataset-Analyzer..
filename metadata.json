@@ -1,0 +1,6 @@
+{
+  "name": "Dataset Analyzer & Visualizer",
+  "description": "Professional Windows Desktop Data Analysis & Visualization application built with Python, Tkinter, Pandas, Matplotlib, Seaborn, SQLite, OpenPyXL, and ReportLab.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

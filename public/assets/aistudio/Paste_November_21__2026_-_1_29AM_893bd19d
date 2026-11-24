@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام تحليل البيانات واستعراضها | Emerald & Platinum Desktop OS</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Cairo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome 6 CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Chart.js & DataLabels Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            cairo: ['Cairo', 'sans-serif'],
+          },
+          colors: {
+            emeraldos: {
+              950: '#01120c',
+              900: '#032117',
+              800: '#063626',
+              700: '#0a4f38',
+              600: '#106e4f',
+              500: '#148b64',
+              400: '#1ab381',
+            },
+            platinum: {
+              100: '#f8fafc',
+              200: '#e2e8f0',
+              300: '#cbd5e1',
+            },
+            platgold: {
+              100: '#fcf8e3',
+              200: '#f7edbc',
+              300: '#efdb8a',
+              400: '#e2c974',
+              500: '#c5a059',
+              600: '#9b7b38',
+              700: '#6d5423',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      font-family: 'Cairo', sans-serif;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #010c08;
+      color: #F8FAFC;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #01120c;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #148b64, #c5a059);
+      border-radius: 8px;
+    }
+
+    /* Deep Obsidian Emerald Wallpaper */
+    .emerald-wallpaper {
+      background: 
+        radial-gradient(circle at 12% 18%, rgba(20, 139, 100, 0.22) 0%, transparent 40%),
+        radial-gradient(circle at 88% 82%, rgba(197, 160, 89, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(6, 54, 38, 0.85) 0%, transparent 75%),
+        linear-gradient(135deg, #010a07 0%, #031c13 50%, #01120c 100%);
+    }
+
+    /* Platinum-Gold Metallic Accents */
+    .platgold-gradient {
+      background: linear-gradient(135deg, #FCF8E3 0%, #E2C974 45%, #C5A059 100%);
+      box-shadow: 0 4px 18px rgba(197, 160, 89, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.7);
+    }
+    .platgold-gradient:hover {
+      background: linear-gradient(135deg, #FFFFFF 0%, #EFDB8A 50%, #D4AF37 100%);
+      box-shadow: 0 6px 24px rgba(226, 201, 116, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+    }
+
+    .emerald-glow-border {
+      border: 1px solid rgba(197, 160, 89, 0.35);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(20, 139, 100, 0.2);
+    }
+
+    /* Glassmorphism Panels */
+    .glass-panel-emerald {
+      background: linear-gradient(165deg, rgba(3, 33, 23, 0.95) 0%, rgba(1, 18, 12, 0.98) 100%);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(197, 160, 89, 0.25);
+    }
+
+    /* Tree View Styling & Branch Connectors */
+    .tree-node-header {
+      transition: all 0.2s ease;
+    }
+    .tree-node-header:hover {
+      background: rgba(10, 79, 56, 0.6);
+      color: #EFDB8A;
+    }
+    
+    .tree-children {
+      position: relative;
+      margin-right: 0.85rem;
+      padding-right: 0.65rem;
+      border-right: 1.5px stroke-dasharray rgba(197, 160, 89, 0.35);
+    }
+    .tree-children::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 1.5px;
+      background: linear-gradient(180deg, rgba(197, 160, 89, 0.4), rgba(20, 139, 100, 0.1));
+    }
+
+    .tree-item-btn {
+      position: relative;
+      background: rgba(1, 18, 12, 0.6);
+      border: 1px solid rgba(197, 160, 89, 0.15);
+      transition: all 0.18s ease;
+    }
+    .tree-item-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -0.65rem;
+      width: 0.65rem;
+      height: 1px;
+      background: rgba(197, 160, 89, 0.35);
+    }
+    .tree-item-btn:hover {
+      border-color: rgba(226, 201, 116, 0.6);
+      background: rgba(10, 79, 56, 0.7);
+      transform: translateX(-2px);
+    }
+    .tree-item-btn.active-tree-item {
+      background: linear-gradient(135deg, #FCF8E3 0%, #E2C974 50%, #C5A059 100%);
+      color: #01120c !important;
+      font-weight: 800;
+      border-color: #FFF;
+      box-shadow: 0 4px 14px rgba(197, 160, 89, 0.35);
+    }
+    .tree-item-btn.active-tree-item i,
+    .tree-item-btn.active-tree-item span {
+      color: #01120c !important;
+    }
+
+    /* Workspace Top Tabs */
+    .workspace-tab {
+      background: rgba(3, 33, 23, 0.85);
+      border: 1px solid rgba(197, 160, 89, 0.25);
+      color: #CBD5E1;
+      transition: all 0.2s ease;
+    }
+    .workspace-tab:hover {
+      border-color: #E2C974;
+      color: #FFF;
+    }
+    .workspace-tab.active-tab {
+      background: linear-gradient(180deg, #0A4F38 0%, #032117 100%);
+      border: 1px solid #C5A059;
+      border-bottom: 3px solid #E2C974;
+      color: #EFDB8A;
+      font-weight: 800;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Chart Canvas Surfaces */
+    .chart-surface-light {
+      background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+      border-radius: 12px;
+      border: 2px solid #E2E8F0;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.9), 0 8px 22px rgba(0,0,0,0.4);
+    }
+
+    /* Chart Type Grid Items in Tree Panel */
+    .chart-type-card-mini {
+      background: rgba(1, 18, 12, 0.8);
+      border: 1px solid rgba(197, 160, 89, 0.2);
+      transition: all 0.18s ease;
+    }
+    .chart-type-card-mini:hover {
+      border-color: #E2C974;
+      background: rgba(10, 79, 56, 0.6);
+    }
+    .chart-type-card-mini.selected {
+      background: linear-gradient(135deg, #C5A059 0%, #6D5423 100%);
+      color: #FFFFFF;
+      border-color: #FFF;
+      box-shadow: 0 2px 8px rgba(197, 160, 89, 0.4);
+    }
+
+    .glow-pill-emerald {
+      box-shadow: 0 0 15px rgba(20, 139, 100, 0.5);
+    }
+  </style>
+</head>
+<body class="h-screen w-screen emerald-wallpaper relative flex flex-col justify-between overflow-hidden">
+
+  <!-- ==================== CINEMATIC LIGHT PARTICLES (SVG) ==================== -->
+  <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-25 z-0" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="emGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#148b64" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#01120c" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <circle cx="18%" cy="20%" r="320" fill="url(#emGrad)" />
+    <circle cx="82%" cy="80%" r="380" fill="url(#emGrad)" />
+    <path d="M -100 250 Q 450 80 950 320 T 1950 120" fill="none" stroke="#c5a059" stroke-width="0.8" stroke-dasharray="6,6" opacity="0.4"/>
+  </svg>
+
+  <!-- ==================== MAIN APPLICATION WINDOW ==================== -->
+  <div id="mainAppWindow" class="relative z-20 m-2 sm:m-3 mb-13 flex-1 glass-panel-emerald rounded-2xl emerald-glow-border flex flex-col overflow-hidden transition-all duration-300">
+    
+    <!-- Titlebar Header -->
+    <div class="bg-gradient-to-r from-emeraldos-950 via-emeraldos-900 to-emeraldos-950 border-b border-platgold-500/40 px-4 py-2 flex items-center justify-between gap-3 shrink-0">
+      
+      <!-- Right: App Name & Logo -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-lg platgold-gradient text-emeraldos-950 flex items-center justify-center font-black text-sm shadow">
+          <i class="fa-solid fa-gem"></i>
+        </div>
+        <div>
+          <h1 class="text-xs sm:text-sm font-black text-white leading-tight">
+            نظام <span class="text-platgold-400">تحليل البيانات واستعراضها</span> | Dataset Analyzer Pro
+          </h1>
+          <p class="text-[9.5px] text-emeraldos-400 font-bold hidden sm:block">الإصدار الزمردي الأكاديمي الشامل | Emerald Edition</p>
+        </div>
+      </div>
+
+      <!-- Center: Active Dataset Badge -->
+      <div class="hidden md:flex items-center gap-2 bg-emeraldos-950 px-3 py-1 rounded-xl border border-platgold-500/30">
+        <i class="fa-solid fa-database text-platgold-400 text-xs"></i>
+        <span id="titlebarDatasetName" class="text-xs font-black text-platgold-300" dir="ltr">بيانات_المبيعات_والأرباح.csv</span>
+        <span id="titlebarDatasetBadge" class="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-mono font-bold">CSV</span>
+      </div>
+
+      <!-- Left: Window Controls -->
+      <div class="flex items-center gap-2">
+        <button onclick="minimizeAppWindow()" title="تصغير إلى سطح المكتب" class="w-3.5 h-3.5 rounded-full bg-amber-400 hover:bg-amber-500 transition shadow flex items-center justify-center text-[8px] text-amber-950 font-black">
+          <i class="fa-solid fa-minus opacity-0 hover:opacity-100"></i>
+        </button>
+        <button onclick="toggleMaximizeWindow()" title="استعادة / مليان الشاشة" class="w-3.5 h-3.5 rounded-full bg-emerald-500 hover:bg-emerald-600 transition shadow flex items-center justify-center text-[8px] text-emerald-950 font-black">
+          <i class="fa-solid fa-expand opacity-0 hover:opacity-100"></i>
+        </button>
+        <button onclick="closeAppWindow()" title="إغلاق" class="w-3.5 h-3.5 rounded-full bg-rose-500 hover:bg-rose-600 transition shadow flex items-center justify-center text-[8px] text-rose-950 font-black">
+          <i class="fa-solid fa-xmark opacity-0 hover:opacity-100"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Window Inner Content (2-Column: Compact Right Tree Panel (265px) | Left Main Workspace) -->
+    <div class="flex-1 flex overflow-hidden">
+      
+      <!-- ==================== COMPACT RIGHT-SIDE TREE-VIEW PANEL (265px) ==================== -->
+      <aside class="w-[265px] shrink-0 bg-emeraldos-950/95 border-l border-platgold-500/30 p-2.5 flex flex-col justify-between overflow-y-auto gap-2.5 shadow-2xl z-10 text-xs">
+        
+        <div class="space-y-2">
+          
+          <!-- TREE HEADER -->
+          <div class="flex items-center justify-between border-b border-platgold-500/25 pb-1.5 px-1">
+            <div class="flex items-center gap-1.5">
+              <i class="fa-solid fa-sitemap text-platgold-400 text-xs"></i>
+              <h3 class="text-xs font-black text-white">لوحة التحكم الشجرية</h3>
+            </div>
+            <span class="text-[9px] bg-emeraldos-800 text-platgold-300 px-1.5 py-0.5 rounded font-bold">Tree-View</span>
+          </div>
+
+          <!-- TREE HIERARCHY ROOT -->
+          <div class="space-y-1.5 font-bold" id="treeViewRoot">
+            
+            <!-- NODE 1: PAGES EXPLORER -->
+            <div class="tree-node">
+              <div onclick="toggleTreeNode('treeNodePages')" class="tree-node-header flex items-center justify-between p-1.5 rounded-lg cursor-pointer text-platgold-300">
+                <div class="flex items-center gap-1.5">
+                  <i id="treeNodePagesArrow" class="fa-solid fa-chevron-down text-[10px] text-platgold-400 transition-transform"></i>
+                  <i class="fa-solid fa-folder-open text-amber-400 text-xs"></i>
+                  <span class="text-xs font-black">1. مستكشف الصفحات</span>
+                </div>
+                <span class="text-[9px] text-slate-400">6</span>
+              </div>
+
+              <!-- Children of Node 1 -->
+              <div id="treeNodePages" class="tree-children mt-1 space-y-1">
+                
+                <button onclick="openOrSwitchTab('dashboard')" data-tree-page="dashboard" class="tree-item-btn active-tree-item w-full p-1.5 rounded-lg flex items-center justify-between text-white">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-house text-emerald-400 text-xs"></i>
+                    <span>لوحة القيادة</span>
+                  </div>
+                  <i class="fa-solid fa-angle-left text-[9px] opacity-60"></i>
+                </button>
+
+                <button onclick="openOrSwitchTab('studio')" data-tree-page="studio" class="tree-item-btn w-full p-1.5 rounded-lg flex items-center justify-between text-white">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-chart-column text-emerald-400 text-xs"></i>
+                    <span>استوديو الرسوم</span>
+                  </div>
+                  <i class="fa-solid fa-angle-left text-[9px] opacity-60"></i>
+                </button>
+
+                <button onclick="openOrSwitchTab('stats')" data-tree-page="stats" class="tree-item-btn w-full p-1.5 rounded-lg flex items-center justify-between text-white">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-emerald-400 text-xs"></i>
+                    <span>التحليل الإحصائي</span>
+                  </div>
+                  <i class="fa-solid fa-angle-left text-[9px] opacity-60"></i>
+                </button>
+
+                <button onclick="openOrSwitchTab('details')" data-tree-page="details" class="tree-item-btn w-full p-1.5 rounded-lg flex items-center justify-between text-white">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-table-list text-emerald-400 text-xs"></i>
+                    <span>مستعرض البيانات</span>
+                  </div>
+                  <i class="fa-solid fa-angle-left text-[9px] opacity-60"></i>
+                </button>
+
+                <button onclick="openOrSwitchTab('loader')" data-tree-page="loader" class="tree-item-btn w-full p-1.5 rounded-lg flex items-center justify-between text-white">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-folder-open text-emerald-400 text-xs"></i>
+                    <span>استيراد ملف</span>
+                  </div>
+                  <i class="fa-solid fa-angle-left text-[9px] opacity-60"></i>
+                </button>
+
+                <button onclick="openOrSwitchTab('about')" data-tree-page="about" class="tree-item-btn w-full p-1.5 rounded-lg flex items-center justify-between text-white">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-graduation-cap text-emerald-400 text-xs"></i>
+                    <span>الدليل الأكاديمي</span>
+                  </div>
+                  <i class="fa-solid fa-angle-left text-[9px] opacity-60"></i>
+                </button>
+
+              </div>
+            </div>
+
+            <!-- NODE 2: DATA SOURCES -->
+            <div class="tree-node pt-1">
+              <div onclick="toggleTreeNode('treeNodeData')" class="tree-node-header flex items-center justify-between p-1.5 rounded-lg cursor-pointer text-platgold-300">
+                <div class="flex items-center gap-1.5">
+                  <i id="treeNodeDataArrow" class="fa-solid fa-chevron-down text-[10px] text-platgold-400 transition-transform"></i>
+                  <i class="fa-solid fa-database text-sky-400 text-xs"></i>
+                  <span class="text-xs font-black">2. إدارة البيانات</span>
+                </div>
+                <span class="text-[9px] text-slate-400">4</span>
+              </div>
+
+              <!-- Children of Node 2 -->
+              <div id="treeNodeData" class="tree-children mt-1 space-y-1">
+                <button onclick="switchDataset('sales')" class="tree-item-btn w-full p-1.5 rounded-lg flex items-center justify-between text-white">
+                  <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-basket-shopping text-amber-400 text-[10px]"></i>
+                    <span class="truncate">مبيعات المتجر (CSV)</span>
+                  </div>
+                  <span class="text-[8px] bg-emerald-500/20 text-emerald-300 px-1 rounded">1k</span>
+                </button>
+
+                <button onclick="switchDataset('employees')" class="tree-item-btn w-full p-1.5 rounded-lg flex items-center justify-between text-white">
+                  <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-users text-sky-400 text-[10px]"></i>
+                    <span class="truncate">بيانات الموظفين (CSV)</span>
+                  </div>
+                  <span class="text-[8px] bg-sky-500/20 text-sky-300 px-1 rounded">850</span>
+                </button>
+
+                <button onclick="switchDataset('students')" class="tree-item-btn w-full p-1.5 rounded-lg flex items-center justify-between text-white">
+                  <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-user-graduate text-purple-400 text-[10px]"></i>
+                    <span class="truncate">درجات الطلاب (JSON)</span>
+                  </div>
+                  <span class="text-[8px] bg-purple-500/20 text-purple-300 px-1 rounded">620</span>
+                </button>
+
+                <button onclick="openOrSwitchTab('loader')" class="tree-item-btn w-full p-1.5 rounded-lg flex items-center justify-between text-white">
+                  <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-circle-plus text-emerald-400 text-[10px]"></i>
+                    <span class="truncate">رفع ملف خارجي...</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- NODE 3: CHART CONTROLS & AXES -->
+            <div class="tree-node pt-1">
+              <div onclick="toggleTreeNode('treeNodeControls')" class="tree-node-header flex items-center justify-between p-1.5 rounded-lg cursor-pointer text-platgold-300">
+                <div class="flex items-center gap-1.5">
+                  <i id="treeNodeControlsArrow" class="fa-solid fa-chevron-down text-[10px] text-platgold-400 transition-transform"></i>
+                  <i class="fa-solid fa-sliders text-platgold-400 text-xs"></i>
+                  <span class="text-xs font-black">3. إعدادات المحاور</span>
+                </div>
+              </div>
+
+              <!-- Children of Node 3 -->
+              <div id="treeNodeControls" class="tree-children mt-1 p-2 bg-emeraldos-900/90 rounded-xl border border-platgold-500/20 space-y-2">
+                
+                <!-- X Select -->
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-300 mb-0.5">المحور الأفقي (X):</label>
+                  <select id="ctrlXSelect" onchange="executeGenerateChart()" class="w-full bg-emeraldos-950 text-white font-bold text-[11px] rounded p-1 border border-platgold-500/30 focus:outline-none"></select>
+                </div>
+
+                <!-- Y Select -->
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-300 mb-0.5">المحور الرأسي (Y):</label>
+                  <select id="ctrlYSelect" onchange="executeGenerateChart()" class="w-full bg-emeraldos-950 text-white font-bold text-[11px] rounded p-1 border border-platgold-500/30 focus:outline-none"></select>
+                </div>
+
+                <!-- Aggregation Mode -->
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-300 mb-0.5">التجميع (Aggregation):</label>
+                  <select id="ctrlAggSelect" onchange="executeGenerateChart()" class="w-full bg-emeraldos-950 text-white font-bold text-[11px] rounded p-1 border border-platgold-500/30 focus:outline-none">
+                    <option value="sum" selected>المجموع (Sum)</option>
+                    <option value="avg">المتوسط (Average)</option>
+                    <option value="count">العدد (Count)</option>
+                    <option value="max">أعلى قيمة (Max)</option>
+                    <option value="min">أدنى قيمة (Min)</option>
+                  </select>
+                </div>
+
+                <!-- 2x3 Chart Type Grid -->
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-300 mb-1">نوع الرسم البياني:</label>
+                  <div class="grid grid-cols-3 gap-1" id="chartTypeGrid">
+                    <button onclick="selectChartType('bar')" data-type="bar" class="chart-type-card-mini selected p-1 rounded text-center flex flex-col items-center justify-center">
+                      <i class="fa-solid fa-chart-column text-xs"></i>
+                      <span class="text-[9px] font-bold">أعمدة</span>
+                    </button>
+                    <button onclick="selectChartType('line')" data-type="line" class="chart-type-card-mini p-1 rounded text-center flex flex-col items-center justify-center">
+                      <i class="fa-solid fa-chart-line text-xs"></i>
+                      <span class="text-[9px] font-bold">خطي</span>
+                    </button>
+                    <button onclick="selectChartType('pie')" data-type="pie" class="chart-type-card-mini p-1 rounded text-center flex flex-col items-center justify-center">
+                      <i class="fa-solid fa-chart-pie text-xs"></i>
+                      <span class="text-[9px] font-bold">دائري</span>
+                    </button>
+                    <button onclick="selectChartType('doughnut')" data-type="doughnut" class="chart-type-card-mini p-1 rounded text-center flex flex-col items-center justify-center">
+                      <i class="fa-solid fa-circle-notch text-xs"></i>
+                      <span class="text-[9px] font-bold">حلقي</span>
+                    </button>
+                    <button onclick="selectChartType('radar')" data-type="radar" class="chart-type-card-mini p-1 rounded text-center flex flex-col items-center justify-center">
+                      <i class="fa-solid fa-satellite-dish text-xs"></i>
+                      <span class="text-[9px] font-bold">رادار</span>
+                    </button>
+                    <button onclick="selectChartType('polarArea')" data-type="polarArea" class="chart-type-card-mini p-1 rounded text-center flex flex-col items-center justify-center">
+                      <i class="fa-solid fa-compass text-xs"></i>
+                      <span class="text-[9px] font-bold">قطبي</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Execute Button -->
+                <button onclick="executeGenerateChart(true)" class="w-full platgold-gradient text-emeraldos-950 font-black text-xs py-2 rounded-lg shadow flex items-center justify-center gap-1.5 mt-1">
+                  <i class="fa-solid fa-play text-[10px]"></i>
+                  <span>تنفيذ وعرض النتائج ▶</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- NODE 4: EXPORT & SAVE -->
+            <div class="tree-node pt-1">
+              <div onclick="toggleTreeNode('treeNodeExport')" class="tree-node-header flex items-center justify-between p-1.5 rounded-lg cursor-pointer text-platgold-300">
+                <div class="flex items-center gap-1.5">
+                  <i id="treeNodeExportArrow" class="fa-solid fa-chevron-down text-[10px] text-platgold-400 transition-transform"></i>
+                  <i class="fa-solid fa-download text-emerald-400 text-xs"></i>
+                  <span class="text-xs font-black">4. التصدير والحفظ</span>
+                </div>
+              </div>
+
+              <!-- Children of Node 4 -->
+              <div id="treeNodeExport" class="tree-children mt-1 space-y-1">
+                <button onclick="downloadChartCanvas()" class="tree-item-btn w-full p-1.5 rounded-lg flex items-center justify-between text-white">
+                  <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-image text-emerald-400 text-[10px]"></i>
+                    <span>حفظ الرسم (PNG)</span>
+                  </div>
+                </button>
+
+                <button onclick="exportCSVFile()" class="tree-item-btn w-full p-1.5 rounded-lg flex items-center justify-between text-white">
+                  <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-csv text-sky-400 text-[10px]"></i>
+                    <span>تصدير البيانات (CSV)</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Tree Panel Footer: Developer Signature -->
+        <div class="bg-emeraldos-950 p-2 rounded-xl border border-platgold-500/25 text-center space-y-0.5">
+          <div class="flex items-center justify-center gap-1 text-[11px] text-platgold-300 font-black">
+            <i class="fa-solid fa-code text-[10px]"></i>
+            <span>تطوير: م. زكريا فيصل العزعزي</span>
+          </div>
+          <p class="text-[9px] text-emeraldos-400 font-semibold">مشروع تحليل البيانات © 2026</p>
+        </div>
+
+      </aside>
+
+      <!-- ==================== MAIN WORKSPACE (FULL SCREEN AREA) ==================== -->
+      <main class="flex-1 flex flex-col p-3 overflow-y-auto bg-emeraldos-950/40">
+        
+        <!-- Multi-Tab Header Bar -->
+        <div class="flex items-center justify-between pb-2 mb-3 border-b border-platgold-500/30 gap-2 overflow-x-auto">
+          <div class="flex items-center gap-1.5 overflow-x-auto py-0.5" id="tabList"></div>
+
+          <button onclick="openOrSwitchTab('studio')" class="platgold-gradient text-emeraldos-950 font-black text-xs px-3 py-1 rounded-lg shrink-0 flex items-center gap-1">
+            <i class="fa-solid fa-plus text-[9px]"></i>
+            <span>فتح استوديو الرسوم</span>
+          </button>
+        </div>
+
+        <!-- ==================== PAGE 1: DASHBOARD ==================== -->
+        <section id="page-dashboard" class="page-view flex flex-col gap-3">
+          
+          <!-- 6 KPI Summary Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
+            <div class="bg-gradient-to-br from-emeraldos-800 to-emeraldos-900 rounded-xl p-2.5 border border-emeraldos-500/40 shadow">
+              <p class="text-[10px] font-bold text-emeraldos-300">إجمالي المجموع (Sum)</p>
+              <p id="kpiTotalSum" class="text-base font-black text-white mt-0.5 truncate">0</p>
+              <span class="text-[8.5px] text-emeraldos-400">مجموع المحور Y</span>
+            </div>
+
+            <div class="bg-gradient-to-br from-teal-800 to-emeraldos-900 rounded-xl p-2.5 border border-teal-500/40 shadow">
+              <p class="text-[10px] font-bold text-teal-200">المتوسط الحسابي (Mean)</p>
+              <p id="kpiAverageVal" class="text-base font-black text-white mt-0.5 truncate">0</p>
+              <span class="text-[8.5px] text-teal-300">متوسط المحور Y</span>
+            </div>
+
+            <div class="bg-gradient-to-br from-amber-700 to-emeraldos-950 rounded-xl p-2.5 border border-platgold-500/40 shadow">
+              <p class="text-[10px] font-bold text-platgold-200">أعلى قيمة (Maximum)</p>
+              <p id="kpiMaxVal" class="text-base font-black text-platgold-300 mt-0.5 truncate">0</p>
+              <span id="kpiMaxCategory" class="text-[8.5px] text-platgold-400 truncate block">الفئة الأعلى</span>
+            </div>
+
+            <div class="bg-gradient-to-br from-indigo-900 to-emeraldos-950 rounded-xl p-2.5 border border-indigo-500/40 shadow">
+              <p class="text-[10px] font-bold text-indigo-200">أدنى قيمة (Minimum)</p>
+              <p id="kpiMinVal" class="text-base font-black text-white mt-0.5 truncate">0</p>
+              <span id="kpiMinCategory" class="text-[8.5px] text-indigo-300 truncate block">الفئة الأدنى</span>
+            </div>
+
+            <div class="bg-gradient-to-br from-sky-900 to-emeraldos-950 rounded-xl p-2.5 border border-sky-500/40 shadow">
+              <p class="text-[10px] font-bold text-sky-200">عدد الصفوف (Records)</p>
+              <p id="kpiRowsCount" class="text-base font-black text-white mt-0.5">1,000</p>
+              <span class="text-[8.5px] text-sky-300">df.shape[0]</span>
+            </div>
+
+            <div class="bg-gradient-to-br from-rose-900 to-emeraldos-950 rounded-xl p-2.5 border border-rose-500/40 shadow">
+              <p class="text-[10px] font-bold text-rose-200">عدد الأعمدة (Features)</p>
+              <p id="kpiColsCount" class="text-base font-black text-white mt-0.5">8</p>
+              <span class="text-[8.5px] text-rose-300">df.shape[1]</span>
+            </div>
+          </div>
+
+          <!-- Dual Dashboard Charts Surface -->
+          <div class="grid grid-cols-1 xl:grid-cols-12 gap-3">
+            <div class="xl:col-span-7 chart-surface-light p-3 flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-2">
+                <span id="dashBarTitle" class="bg-emeraldos-950 text-platgold-300 text-xs font-black px-3 py-1 rounded-full border border-platgold-500/30 shadow">
+                  عرض نتائج تحليل المحاور
+                </span>
+                <span class="text-[10px] text-slate-500 font-bold">Chart.js Engine</span>
+              </div>
+              <div class="relative h-64 w-full">
+                <canvas id="dashMainCanvas"></canvas>
+              </div>
+            </div>
+
+            <div class="xl:col-span-5 chart-surface-light p-3 flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-2">
+                <span id="dashDonutTitle" class="bg-emeraldos-950 text-platgold-300 text-xs font-black px-3 py-1 rounded-full border border-platgold-500/30 shadow">
+                  التوزيع النسبي المئوي (%)
+                </span>
+                <span class="text-[10px] text-slate-500 font-bold">Ratio Share</span>
+              </div>
+              <div class="relative h-64 w-full flex items-center justify-center">
+                <canvas id="dashDonutCanvas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- ANALYTICAL BREAKDOWN TABLE -->
+          <div class="bg-emeraldos-900/90 rounded-xl p-3 border border-platgold-500/30">
+            <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-white/10">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-list-check text-platgold-400 text-xs"></i>
+                <h3 class="text-xs font-black text-white">جدول التفاصيل المباشرة وقيم النتائج المحسوبة لكل تصنيف</h3>
+              </div>
+              <span class="text-[9px] bg-platgold-500/20 text-platgold-300 px-2 py-0.5 rounded font-bold">ترتيب تنازلي</span>
+            </div>
+
+            <div class="overflow-x-auto rounded-lg border border-white/10">
+              <table class="w-full text-right border-collapse text-xs">
+                <thead class="bg-emeraldos-950 text-platgold-300 sticky top-0 border-b border-platgold-500/30">
+                  <tr>
+                    <th class="py-1.5 px-3 font-black"># الترتيب</th>
+                    <th class="py-1.5 px-3 font-black">التصنيف (X-Axis)</th>
+                    <th class="py-1.5 px-3 font-black">القيمة المحسوبة (Y-Value)</th>
+                    <th class="py-1.5 px-3 font-black">النسبة المئوية (%)</th>
+                    <th class="py-1.5 px-3 font-black">الفرق عن المتوسط</th>
+                  </tr>
+                </thead>
+                <tbody id="dashBreakdownBody" class="divide-y divide-white/10 bg-emeraldos-950/60"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ==================== PAGE 2: CHARTS STUDIO ==================== -->
+        <section id="page-studio" class="page-view hidden flex-col gap-3">
+          <div class="bg-emeraldos-900/90 rounded-xl p-3.5 border border-platgold-500/30 flex-1 flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-2 mb-2 border-b border-white/15">
+              <h3 id="studioHeaderTitle" class="text-xs font-black text-platgold-300">
+                شاشة عرض الرسم البياني المكبر
+              </h3>
+              <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-400/30 font-bold">
+                تفاعلي بالكامل
+              </span>
+            </div>
+
+            <div class="chart-surface-light p-3 flex-1 flex items-center justify-center">
+              <div class="relative h-[430px] w-full">
+                <canvas id="studioCanvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== PAGE 3: STATISTICAL MATRIX ==================== -->
+        <section id="page-stats" class="page-view hidden flex-col gap-3">
+          <div class="bg-emeraldos-900/90 rounded-xl p-3.5 border border-platgold-500/30">
+            <div class="flex items-center justify-between pb-2 mb-3 border-b border-white/15">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-calculator text-platgold-400 text-xs"></i>
+                <h2 class="text-xs font-black text-white">جدول التحليل الإحصائي الوصفي الشامل (Pandas Matrix - df.describe)</h2>
+              </div>
+              <span class="text-[10px] bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded font-mono">Statistical Metrics</span>
+            </div>
+            
+            <div id="statsMatrixGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+          </div>
+        </section>
+
+        <!-- ==================== PAGE 4: DATA EXPLORER ==================== -->
+        <section id="page-details" class="page-view hidden flex-col gap-3">
+          <div class="bg-emeraldos-900/90 rounded-xl p-3.5 border border-platgold-500/30">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 mb-2 border-b border-white/15">
+              <h2 class="text-xs font-black text-white">معاينة واستكشاف السجلات (انقر أي صف لمعاينة تفاصيله)</h2>
+              <div class="flex items-center gap-2">
+                <select id="detailsCatFilter" onchange="renderFullDetailsGrid()" class="bg-emeraldos-950 text-white text-xs rounded px-2 py-1 border border-platgold-500/30"></select>
+                <input type="text" id="detailsSearchField" oninput="renderFullDetailsGrid()" placeholder="بحث..." class="bg-emeraldos-950 text-white text-xs rounded px-2.5 py-1 border border-platgold-500/30 w-40" />
+              </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-lg border border-white/10 max-h-[460px]">
+              <table class="w-full text-right border-collapse text-xs">
+                <thead class="bg-emeraldos-950 text-platgold-300 sticky top-0 border-b border-platgold-500/30">
+                  <tr id="fullDetailsHead"></tr>
+                </thead>
+                <tbody id="fullDetailsBody" class="divide-y divide-white/10 bg-emeraldos-950/60"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== PAGE 5: DATASET LOADER ==================== -->
+        <section id="page-loader" class="page-view hidden flex-col gap-3">
+          <div class="bg-emeraldos-900/90 rounded-xl p-4 border border-platgold-500/30 space-y-3">
+            <div class="flex items-center gap-2 pb-2 border-b border-white/15">
+              <i class="fa-solid fa-cloud-arrow-up text-platgold-400 text-base"></i>
+              <h2 class="text-xs font-black text-white">مركز تحميل واختيار ملفات البيانات (Dataset Loader)</h2>
+            </div>
+
+            <!-- Dropzone Area -->
+            <div onclick="document.getElementById('realFileInput').click()" class="border-2 border-dashed border-platgold-500/40 hover:border-platgold-400 bg-emeraldos-950/80 rounded-xl p-6 text-center cursor-pointer transition group">
+              <div class="w-12 h-12 rounded-full platgold-gradient text-emeraldos-950 flex items-center justify-center text-xl mx-auto mb-2 group-hover:scale-110 transition">
+                <i class="fa-solid fa-file-import"></i>
+              </div>
+              <h3 class="text-xs font-black text-white mb-0.5">اضغط هنا لاستعراض أو إفلات ملف بيانات</h3>
+              <p class="text-[10px] text-slate-400">يدعم صيغ الملفات: <strong class="text-platgold-300 font-mono">CSV (.csv), JSON (.json)</strong></p>
+              <input type="file" id="realFileInput" accept=".csv,.json" class="hidden" onchange="handleRealFileUpload(event)" />
+            </div>
+
+            <!-- Preset Datasets -->
+            <div class="space-y-1.5 pt-1">
+              <h4 class="text-[11px] font-black text-slate-300">أو قم باختيار إحدى قواعد البيانات الجاهزة:</h4>
+              <div class="grid grid-cols-3 gap-2">
+                <button onclick="switchDataset('sales'); openOrSwitchTab('dashboard');" class="bg-emeraldos-950 hover:bg-platgold-500/20 border border-platgold-500/30 p-2.5 rounded-xl text-right transition flex items-center justify-between">
+                  <div>
+                    <p class="text-xs font-black text-platgold-300">مبيعات المتجر</p>
+                    <p class="text-[9px] text-slate-400 mt-0.5">1000 سجل (CSV)</p>
+                  </div>
+                  <i class="fa-solid fa-basket-shopping text-platgold-400"></i>
+                </button>
+
+                <button onclick="switchDataset('employees'); openOrSwitchTab('dashboard');" class="bg-emeraldos-950 hover:bg-platgold-500/20 border border-platgold-500/30 p-2.5 rounded-xl text-right transition flex items-center justify-between">
+                  <div>
+                    <p class="text-xs font-black text-platgold-300">بيانات الموظفين</p>
+                    <p class="text-[9px] text-slate-400 mt-0.5">850 سجل (CSV)</p>
+                  </div>
+                  <i class="fa-solid fa-users text-platgold-400"></i>
+                </button>
+
+                <button onclick="switchDataset('students'); openOrSwitchTab('dashboard');" class="bg-emeraldos-950 hover:bg-platgold-500/20 border border-platgold-500/30 p-2.5 rounded-xl text-right transition flex items-center justify-between">
+                  <div>
+                    <p class="text-xs font-black text-platgold-300">درجات الطلاب</p>
+                    <p class="text-[9px] text-slate-400 mt-0.5">620 سجل (JSON)</p>
+                  </div>
+                  <i class="fa-solid fa-user-graduate text-platgold-400"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== PAGE 6: ACADEMIC VIVA GUIDE ==================== -->
+        <section id="page-about" class="page-view hidden flex-col gap-3">
+          <div class="bg-emeraldos-900/90 rounded-xl p-4 border border-platgold-500/30 space-y-3">
+            
+            <div class="border-b border-white/15 pb-2">
+              <h2 class="text-xs font-black text-white">دليل المناقشة الأكاديمية والتعاريف والأسئلة 20 المتوقعة من الدكتور</h2>
+              <p class="text-[11px] text-platgold-300 font-bold mt-0.5">إعداد وتطوير: <strong class="text-white">المهندس زكريا فيصل العزعزي</strong></p>
+            </div>
+
+            <!-- Definitions Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+              <div class="bg-emeraldos-950 p-2 rounded-lg border border-platgold-500/25">
+                <span class="font-black text-platgold-400 block mb-0.5">DataFrame</span>
+                <p class="text-[9.5px] text-slate-300">هيكل بيانات مفهرس ثنائي الأبعاد (صفوف وأعمدة) في مكتبة Pandas.</p>
+              </div>
+              <div class="bg-emeraldos-950 p-2 rounded-lg border border-platgold-500/25">
+                <span class="font-black text-platgold-400 block mb-0.5">df.shape</span>
+                <p class="text-[9.5px] text-slate-300">خاصية تعيد tuple تمثل أبعاد ملف البيانات: (عدد الصفوف, عدد الأعمدة).</p>
+              </div>
+              <div class="bg-emeraldos-950 p-2 rounded-lg border border-platgold-500/25">
+                <span class="font-black text-platgold-400 block mb-0.5">df.dtypes</span>
+                <p class="text-[9.5px] text-slate-300">تعيد أنواع البيانات المبرمجة لكل عمود (int64, float64, object).</p>
+              </div>
+              <div class="bg-emeraldos-950 p-2 rounded-lg border border-platgold-500/25">
+                <span class="font-black text-platgold-400 block mb-0.5">df.describe()</span>
+                <p class="text-[9.5px] text-slate-300">توليد مصفوفة ملخص الإحصاء الوصفي (Mean, Std, Median, Min, Max).</p>
+              </div>
+            </div>
+
+            <!-- Q&A List -->
+            <div class="space-y-1.5 pt-1 text-xs">
+              <h3 class="text-xs font-black text-white">أبرز أسئلة مناقشة المشروع وإجاباتها الفورية:</h3>
+              
+              <div class="bg-emeraldos-950 p-2.5 rounded-lg border border-white/10 space-y-0.5">
+                <p class="font-black text-platgold-300">س1: ما الهدف الأساسي من تطبيق Dataset Analyzer & Visualizer؟</p>
+                <p class="text-slate-300 text-[10.5px]">توفير تطبيق محلي لسطح المكتب يتيح للمستخدم استيراد ملفات البيانات وتحليل محتوياتها إحصائياً وتوليد رسوم تفاعلية فورية.</p>
+              </div>
+
+              <div class="bg-emeraldos-950 p-2.5 rounded-lg border border-white/10 space-y-0.5">
+                <p class="font-black text-platgold-300">س2: كيف تدمج رسومات Matplotlib/Chart.js داخل واجهة Tkinter في بايثون؟</p>
+                <p class="text-slate-300 text-[10.5px]">في بايثون يتم استخدام الكلاس <code class="text-emerald-400 font-mono">FigureCanvasTkAgg</code> لتضمين شكل Matplotlib Canvas داخل إطار Tkinter Frame.</p>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+  </div>
+
+  <!-- ==================== OS TASKBAR ==================== -->
+  <footer class="fixed bottom-0 left-0 right-0 h-11 bg-emeraldos-950/95 border-t border-platgold-500/35 px-4 flex items-center justify-between z-40 backdrop-blur-md shadow-2xl">
+    <div class="flex items-center gap-3">
+      <button onclick="toggleStartMenu()" class="platgold-gradient text-emeraldos-950 font-black px-3 py-1 rounded-lg text-xs flex items-center gap-1.5 shadow">
+        <i class="fa-solid fa-gem text-xs"></i>
+        <span>ابدأ (Start)</span>
+      </button>
+
+      <div id="taskbarAppItem" onclick="restoreAppWindow()" class="bg-emeraldos-900 border border-platgold-400/50 px-2.5 py-1 rounded-lg flex items-center gap-2 cursor-pointer text-xs font-bold text-platgold-300 glow-pill-emerald">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span>Dataset Analyzer Pro</span>
+      </div>
+    </div>
+
+    <div class="hidden md:flex items-center gap-2 text-xs text-slate-300 font-semibold">
+      <i class="fa-solid fa-desktop text-platgold-400"></i>
+      <span>سطح المكتب الزمردي الأكاديمي | م. زكريا فيصل العزعزي</span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+        <i class="fa-solid fa-wifi text-[9px]"></i>
+        <span>متصل</span>
+      </div>
+      <span id="osClock" class="text-xs font-mono font-bold text-platgold-300 bg-emeraldos-900 px-2.5 py-0.5 rounded border border-platgold-500/30">
+        00:00:00
+      </span>
+    </div>
+  </footer>
+
+  <!-- ==================== START MENU ==================== -->
+  <div id="startMenu" class="hidden fixed bottom-13 right-4 w-64 glass-panel-emerald rounded-2xl p-3 emerald-glow-border z-50">
+    <div class="flex items-center gap-2.5 border-b border-platgold-500/30 pb-2.5 mb-2">
+      <div class="w-8 h-8 rounded-lg platgold-gradient text-emeraldos-950 flex items-center justify-center text-lg font-bold">
+        <i class="fa-solid fa-user-gear"></i>
+      </div>
+      <div>
+        <h4 class="text-xs font-black text-white">م. زكريا فيصل العزعزي</h4>
+        <p class="text-[9.5px] text-platgold-300">مطور نظام تحليل البيانات</p>
+      </div>
+    </div>
+
+    <div class="space-y-1 text-xs">
+      <button onclick="restoreAppWindow(); openOrSwitchTab('dashboard'); toggleStartMenu();" class="w-full text-right p-1.5 rounded-lg hover:bg-emeraldos-800 text-white flex items-center gap-2">
+        <i class="fa-solid fa-house text-platgold-400"></i>
+        <span>الرئيسية (Dashboard)</span>
+      </button>
+      <button onclick="restoreAppWindow(); openOrSwitchTab('studio'); toggleStartMenu();" class="w-full text-right p-1.5 rounded-lg hover:bg-emeraldos-800 text-white flex items-center gap-2">
+        <i class="fa-solid fa-chart-column text-platgold-400"></i>
+        <span>استوديو الرسوم</span>
+      </button>
+      <button onclick="restoreAppWindow(); openOrSwitchTab('stats'); toggleStartMenu();" class="w-full text-right p-1.5 rounded-lg hover:bg-emeraldos-800 text-white flex items-center gap-2">
+        <i class="fa-solid fa-calculator text-platgold-400"></i>
+        <span>التحليل الإحصائي</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== ROW INSPECTOR MODAL ==================== -->
+  <div id="inspectorModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="glass-panel-emerald rounded-2xl max-w-md w-full p-4 emerald-glow-border relative">
+      <div class="flex items-center justify-between border-b border-platgold-500/30 pb-2 mb-2">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-id-card text-platgold-400"></i>
+          <h3 class="text-xs font-black text-white">تفاصيل السجل المحدد</h3>
+        </div>
+        <button onclick="closeInspectorModal()" class="text-slate-300 hover:text-white text-base">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="inspectorContent" class="space-y-1 text-xs"></div>
+      <div class="mt-3 text-left">
+        <button onclick="closeInspectorModal()" class="platgold-gradient text-emeraldos-950 font-black text-xs px-3.5 py-1 rounded-lg">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TOAST NOTIFICATION ==================== -->
+  <div id="toast" class="fixed bottom-14 left-4 bg-emeraldos-900 border border-platgold-400 text-white px-3.5 py-2 rounded-xl shadow-2xl flex items-center gap-2 transform translate-y-24 opacity-0 transition-all duration-300 z-50 text-xs font-bold">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-platgold-400"></i>
+    <span id="toastMsg">تم تنفيذ العملية بنجاح</span>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    Chart.register(ChartDataLabels);
+
+    const datasets = {
+      sales: {
+        id: 'sales',
+        name: 'بيانات_المبيعات_والأرباح.csv',
+        rowsCount: 1000,
+        colsCount: 8,
+        columns: ['#', 'الفرع', 'الفئة', 'المبيعات', 'الأرباح', 'الربع', 'المسؤول', 'الحالة'],
+        numericCols: ['المبيعات', 'الأرباح'],
+        catCols: ['الفرع', 'الفئة', 'الربع', 'الحالة'],
+        defaultX: 'الفرع',
+        defaultY: 'المبيعات',
+        rows: [
+          { '#': 1, 'الفرع': 'صنعاء الرئيسي', 'الفئة': 'المنتجات الرقمية', 'المبيعات': 1250000, 'الأرباح': 350000, 'الربع': 'Q1', 'المسؤول': 'أحمد العزعزي', 'الحالة': 'مكتمل' },
+          { '#': 2, 'الفرع': 'عدن التجاري', 'الفئة': 'الأجهزة الالكترونية', 'المبيعات': 980000, 'الأرباح': 240000, 'الربع': 'Q1', 'المسؤول': 'سارة محمد', 'الحالة': 'مكتمل' },
+          { '#': 3, 'الفرع': 'تعز المركزي', 'الفئة': 'خدمات البرمجيات', 'المبيعات': 750000, 'الأرباح': 310000, 'الربع': 'Q2', 'المسؤول': 'عمر حسن', 'الحالة': 'مكتمل' },
+          { '#': 4, 'الفرع': 'حضرموت', 'الفئة': 'المنتجات الرقمية', 'المبيعات': 1100000, 'الأرباح': 400000, 'الربع': 'Q2', 'المسؤول': 'خالد سالم', 'الحالة': 'مكتمل' },
+          { '#': 5, 'الفرع': 'إب', 'الفئة': 'الأجهزة الالكترونية', 'المبيعات': 620000, 'الأرباح': 150000, 'الربع': 'Q3', 'المسؤول': 'فاطمة علي', 'الحالة': 'قيد التنفيذ' }
+        ]
+      },
+      employees: {
+        id: 'employees',
+        name: 'بيانات_الموظفين_والرواتب.csv',
+        rowsCount: 850,
+        colsCount: 8,
+        columns: ['#', 'اسم الموظف', 'القسم', 'الراتب', 'العمر', 'الجنس', 'سنوات الخبرة', 'التقييم'],
+        numericCols: ['الراتب', 'العمر', 'سنوات الخبرة'],
+        catCols: ['القسم', 'الجنس', 'التقييم'],
+        defaultX: 'القسم',
+        defaultY: 'الراتب',
+        rows: [
+          { '#': 1, 'اسم الموظف': 'زكريا فيصل العزعزي', 'القسم': 'تقنية المعلومات', 'الراتب': 850000, 'العمر': 28, 'الجنس': 'ذكر', 'سنوات الخبرة': 6, 'التقييم': 'ممتاز' },
+          { '#': 2, 'اسم الموظف': 'مريم أحمد', 'القسم': 'المالية', 'الراتب': 620000, 'العمر': 32, 'الجنس': 'أنثى', 'سنوات الخبرة': 7, 'التقييم': 'جيد جداً' },
+          { '#': 3, 'اسم الموظف': 'عبدالرحمن علي', 'القسم': 'المبيعات', 'الراتب': 540000, 'العمر': 29, 'الجنس': 'ذكر', 'سنوات الخبرة': 4, 'التقييم': 'ممتاز' }
+        ]
+      },
+      students: {
+        id: 'students',
+        name: 'نتائج_درجات_الطلاب.json',
+        rowsCount: 620,
+        colsCount: 7,
+        columns: ['#', 'اسم الطالب', 'التخصص', 'المعدل', 'الساعات', 'التقدير', 'المدينة'],
+        numericCols: ['المعدل', 'الساعات'],
+        catCols: ['التخصص', 'التقدير', 'المدينة'],
+        defaultX: 'التخصص',
+        defaultY: 'المعدل',
+        rows: [
+          { '#': 1, 'اسم الطالب': 'ياسر فؤاد', 'التخصص': 'علوم الحاسوب', 'المعدل': 94, 'الساعات': 134, 'التقدير': 'امتياز', 'المدينة': 'صنعاء' },
+          { '#': 2, 'اسم الطالب': 'آلاء حسن', 'التخصص': 'ذكاء اصطناعي', 'المعدل': 91, 'الساعات': 128, 'التقدير': 'امتياز', 'المدينة': 'تعز' }
+        ]
+      }
+    };
+
+    let activeDataset = datasets.sales;
+    let activeTabs = ['dashboard', 'studio'];
+    let currentActiveTab = 'dashboard';
+    let selectedChartType = 'bar';
+
+    let dashMainChartInstance = null;
+    let dashDonutChartInstance = null;
+    let studioChartInstance = null;
+
+    const emeraldPalette = ['#106e4f', '#148b64', '#c5a059', '#10B981', '#06B6D4', '#F59E0B'];
+
+    const pageTitles = {
+      dashboard: { title: 'لوحة القيادة', icon: 'fa-house' },
+      studio: { title: 'استوديو الرسوم', icon: 'fa-chart-column' },
+      stats: { title: 'التحليل الإحصائي', icon: 'fa-calculator' },
+      details: { title: 'مستعرض البيانات', icon: 'fa-table-list' },
+      loader: { title: 'استيراد ملف', icon: 'fa-folder-open' },
+      about: { title: 'الدليل الأكاديمي', icon: 'fa-graduation-cap' }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      startClock();
+      renderTabs();
+      applyDatasetToUI();
+    });
+
+    function startClock() {
+      setInterval(() => {
+        const now = new Date();
+        document.getElementById('osClock').textContent = now.toLocaleTimeString('ar-YE');
+      }, 1000);
+    }
+
+    // TREE COLLAPSE TOGGLE
+    function toggleTreeNode(nodeId) {
+      const el = document.getElementById(nodeId);
+      const arrow = document.getElementById(nodeId + 'Arrow');
+      if (el) {
+        el.classList.toggle('hidden');
+        if (arrow) arrow.classList.toggle('rotate-180');
+      }
+    }
+
+    // TAB SYSTEM
+    function renderTabs() {
+      const container = document.getElementById('tabList');
+      container.innerHTML = activeTabs.map(pageId => {
+        const info = pageTitles[pageId];
+        const isActive = pageId === currentActiveTab;
+        return `
+          <div class="workspace-tab px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer ${isActive ? 'active-tab' : ''}" onclick="switchTab('${pageId}')">
+            <i class="fa-solid ${info.icon}"></i>
+            <span>${info.title}</span>
+            ${activeTabs.length > 1 ? `<i class="fa-solid fa-xmark hover:text-rose-400 p-0.5" onclick="event.stopPropagation(); closeTab('${pageId}')"></i>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openOrSwitchTab(pageId) {
+      if (!activeTabs.includes(pageId)) activeTabs.push(pageId);
+      switchTab(pageId);
+    }
+
+    function switchTab(pageId) {
+      currentActiveTab = pageId;
+      renderTabs();
+
+      document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
+      const target = document.getElementById(`page-${pageId}`);
+      if (target) target.classList.remove('hidden');
+
+      // Highlight active item in Tree View
+      document.querySelectorAll('#treeViewRoot .tree-item-btn').forEach(btn => {
+        btn.classList.remove('active-tree-item');
+        if (btn.dataset.treePage === pageId) btn.classList.add('active-tree-item');
+      });
+
+      if (pageId === 'studio') renderStudioCanvas();
+    }
+
+    function closeTab(pageId) {
+      activeTabs = activeTabs.filter(id => id !== pageId);
+      if (currentActiveTab === pageId) currentActiveTab = activeTabs[activeTabs.length - 1] || 'dashboard';
+      renderTabs();
+      switchTab(currentActiveTab);
+    }
+
+    function selectChartType(type) {
+      selectedChartType = type;
+      document.querySelectorAll('#chartTypeGrid .chart-type-card-mini').forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.dataset.type === type) btn.classList.add('selected');
+      });
+      executeGenerateChart();
+    }
+
+    function switchDataset(key) {
+      if (datasets[key]) {
+        activeDataset = datasets[key];
+        applyDatasetToUI();
+        showToast(`تم تحميل البيانات: ${activeDataset.name}`);
+      }
+    }
+
+    function applyDatasetToUI() {
+      document.getElementById('titlebarDatasetName').textContent = activeDataset.name;
+      document.getElementById('titlebarDatasetBadge').textContent = activeDataset.name.endsWith('.json') ? 'JSON' : 'CSV';
+
+      const xSel = document.getElementById('ctrlXSelect');
+      const ySel = document.getElementById('ctrlYSelect');
+      xSel.innerHTML = activeDataset.catCols.map(c => `<option value="${c}">${c}</option>`).join('');
+      ySel.innerHTML = activeDataset.numericCols.map(c => `<option value="${c}">${c}</option>`).join('');
+
+      const detailsCatSel = document.getElementById('detailsCatFilter');
+      const firstCat = activeDataset.catCols[0];
+      detailsCatSel.innerHTML = `<option value="ALL">جميع السجلات (${activeDataset.rows.length})</option>`;
+      if (firstCat) {
+        const uniques = [...new Set(activeDataset.rows.map(r => r[firstCat]))];
+        uniques.forEach(u => detailsCatSel.innerHTML += `<option value="${u}">${firstCat}: ${u}</option>`);
+      }
+
+      renderFullDetailsGrid();
+      renderStatsMatrix();
+      renderDashCharts();
+    }
+
+    function aggregateData(xCol, yCol, mode = 'sum') {
+      const groups = {}, counts = {}, maxs = {}, mins = {};
+
+      activeDataset.rows.forEach(r => {
+        const key = String(r[xCol] || 'غير محدد');
+        const val = parseFloat(r[yCol]) || 0;
+
+        groups[key] = (groups[key] || 0) + val;
+        counts[key] = (counts[key] || 0) + 1;
+        maxs[key] = maxs[key] !== undefined ? Math.max(maxs[key], val) : val;
+        mins[key] = mins[key] !== undefined ? Math.min(mins[key], val) : val;
+      });
+
+      const labels = Object.keys(groups);
+      const values = labels.map(k => {
+        if (mode === 'sum') return groups[k];
+        if (mode === 'count') return counts[k];
+        if (mode === 'max') return maxs[k];
+        if (mode === 'min') return mins[k];
+        return Math.round(groups[k] / counts[k]);
+      });
+
+      return { labels, values };
+    }
+
+    function renderDashCharts() {
+      const xCol = document.getElementById('ctrlXSelect').value || activeDataset.defaultX;
+      const yCol = document.getElementById('ctrlYSelect').value || activeDataset.defaultY;
+      const mode = document.getElementById('ctrlAggSelect').value || 'sum';
+
+      const { labels, values } = aggregateData(xCol, yCol, mode);
+
+      const totalSum = values.reduce((a, b) => a + b, 0);
+      const avgVal = values.length ? Math.round(totalSum / values.length) : 0;
+      const maxVal = values.length ? Math.max(...values) : 0;
+      const minVal = values.length ? Math.min(...values) : 0;
+
+      const maxIdx = values.indexOf(maxVal);
+      const minIdx = values.indexOf(minVal);
+
+      document.getElementById('kpiTotalSum').textContent = totalSum.toLocaleString();
+      document.getElementById('kpiAverageVal').textContent = avgVal.toLocaleString();
+      document.getElementById('kpiMaxVal').textContent = maxVal.toLocaleString();
+      document.getElementById('kpiMaxCategory').textContent = labels[maxIdx] ? `الأعلى: ${labels[maxIdx]}` : '';
+      document.getElementById('kpiMinVal').textContent = minVal.toLocaleString();
+      document.getElementById('kpiMinCategory').textContent = labels[minIdx] ? `الأدنى: ${labels[minIdx]}` : '';
+
+      document.getElementById('kpiRowsCount').textContent = activeDataset.rowsCount.toLocaleString();
+      document.getElementById('kpiColsCount').textContent = activeDataset.colsCount;
+
+      document.getElementById('dashBarTitle').textContent = `نتائج ${yCol} حسب ${xCol} (${mode.toUpperCase()})`;
+
+      const ctxMain = document.getElementById('dashMainCanvas').getContext('2d');
+      if (dashMainChartInstance) dashMainChartInstance.destroy();
+
+      dashMainChartInstance = new Chart(ctxMain, {
+        type: selectedChartType,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: yCol,
+            data: values,
+            backgroundColor: emeraldPalette,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#01120c', font: { family: 'Cairo', weight: 'bold', size: 10 } } },
+            datalabels: {
+              color: ['pie', 'doughnut'].includes(selectedChartType) ? '#FFF' : '#01120c',
+              anchor: 'end',
+              align: 'top',
+              font: { family: 'Cairo', weight: '800', size: 9 },
+              formatter: (v) => v.toLocaleString()
+            }
+          }
+        }
+      });
+
+      const ctxDonut = document.getElementById('dashDonutCanvas').getContext('2d');
+      if (dashDonutChartInstance) dashDonutChartInstance.destroy();
+
+      dashDonutChartInstance = new Chart(ctxDonut, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{ data: values, backgroundColor: emeraldPalette, borderWidth: 2 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '55%',
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#01120c', font: { family: 'Cairo', weight: '700', size: 9 } } },
+            datalabels: { display: false }
+          }
+        }
+      });
+
+      renderBreakdownTable(labels, values, totalSum, avgVal);
+    }
+
+    function renderBreakdownTable(labels, values, totalSum, avgVal) {
+      const tbody = document.getElementById('dashBreakdownBody');
+      const items = labels.map((l, i) => ({
+        label: l,
+        val: values[i],
+        pct: totalSum ? ((values[i] / totalSum) * 100).toFixed(1) : 0,
+        diff: values[i] - avgVal
+      })).sort((a, b) => b.val - a.val);
+
+      tbody.innerHTML = items.map((item, idx) => `
+        <tr class="hover:bg-emeraldos-800/80 transition">
+          <td class="py-1.5 px-3 font-bold text-platgold-400">#${idx + 1}</td>
+          <td class="py-1.5 px-3 font-bold text-white">${item.label}</td>
+          <td class="py-1.5 px-3 font-black text-emerald-400">${item.val.toLocaleString()}</td>
+          <td class="py-1.5 px-3">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-200 w-10">${item.pct}%</span>
+              <div class="flex-1 bg-emeraldos-950 rounded-full h-1.5 overflow-hidden border border-white/10">
+                <div class="platgold-gradient h-full rounded-full" style="width: ${Math.min(item.pct, 100)}%"></div>
+              </div>
+            </div>
+          </td>
+          <td class="py-1.5 px-3 font-bold ${item.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+            ${item.diff >= 0 ? '+' : ''}${item.diff.toLocaleString()}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderStudioCanvas() {
+      const xCol = document.getElementById('ctrlXSelect').value || activeDataset.defaultX;
+      const yCol = document.getElementById('ctrlYSelect').value || activeDataset.defaultY;
+      const mode = document.getElementById('ctrlAggSelect').value || 'sum';
+
+      const { labels, values } = aggregateData(xCol, yCol, mode);
+      const title = `عرض مكبر: ${mode.toUpperCase()} (${yCol}) حسب (${xCol})`;
+      document.getElementById('studioHeaderTitle').textContent = title;
+
+      const ctx = document.getElementById('studioCanvas').getContext('2d');
+      if (studioChartInstance) studioChartInstance.destroy();
+
+      studioChartInstance = new Chart(ctx, {
+        type: selectedChartType,
+        data: {
+          labels: labels,
+          datasets: [{ label: title, data: values, backgroundColor: emeraldPalette, borderRadius: 6 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#01120c', font: { family: 'Cairo', weight: 'bold' } } },
+            datalabels: {
+              color: ['pie', 'doughnut'].includes(selectedChartType) ? '#FFF' : '#01120c',
+              font: { family: 'Cairo', weight: '800', size: 10 },
+              formatter: (v) => v.toLocaleString()
+            }
+          }
+        }
+      });
+    }
+
+    function executeGenerateChart(notify = false) {
+      renderDashCharts();
+      if (currentActiveTab === 'studio') renderStudioCanvas();
+      if (notify) showToast('تم تحديث الرسوم والنتائج بنجاح!');
+    }
+
+    function renderFullDetailsGrid() {
+      const head = document.getElementById('fullDetailsHead');
+      const body = document.getElementById('fullDetailsBody');
+      const cols = activeDataset.columns;
+
+      const search = document.getElementById('detailsSearchField').value.trim().toLowerCase();
+      const catVal = document.getElementById('detailsCatFilter').value;
+      const firstCat = activeDataset.catCols[0];
+
+      head.innerHTML = cols.map(c => `<th class="py-1.5 px-3 font-black whitespace-nowrap">${c}</th>`).join('');
+
+      const filtered = activeDataset.rows.filter(r => {
+        const matchCat = catVal === 'ALL' || (firstCat && String(r[firstCat]) === catVal);
+        const matchSearch = !search || Object.values(r).some(v => String(v).toLowerCase().includes(search));
+        return matchCat && matchSearch;
+      });
+
+      body.innerHTML = filtered.map(r => `
+        <tr onclick='openInspectorModal(${JSON.stringify(r)})' class="hover:bg-emeraldos-800/80 cursor-pointer transition">
+          ${cols.map(c => `<td class="py-1.5 px-3 whitespace-nowrap text-slate-100">${r[c]}</td>`).join('')}
+        </tr>
+      `).join('');
+    }
+
+    function renderStatsMatrix() {
+      const container = document.getElementById('statsMatrixGrid');
+      container.innerHTML = activeDataset.numericCols.map(col => {
+        const vals = activeDataset.rows.map(r => parseFloat(r[col])).filter(n => !isNaN(n)).sort((a,b)=>a-b);
+        const sum = vals.reduce((a,b)=>a+b,0);
+        const mean = (sum / vals.length).toFixed(1);
+        const min = vals[0];
+        const max = vals[vals.length - 1];
+        const median = vals[Math.floor(vals.length / 2)];
+
+        return `
+          <div class="bg-emeraldos-950/90 border border-platgold-500/30 rounded-xl p-2.5">
+            <div class="flex items-center justify-between border-b border-white/10 pb-1 mb-1.5">
+              <h3 class="text-xs font-black text-platgold-400">إحصائيات العموم: ${col}</h3>
+              <span class="text-[9px] bg-sky-500/20 text-sky-300 px-1.5 py-0.5 rounded font-mono">df['${col}'].describe()</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1 text-center text-xs">
+              <div class="bg-emeraldos-900 p-1 rounded border border-white/10">
+                <p class="text-[8.5px] text-slate-400">المتوسط Mean</p>
+                <p class="text-xs font-black text-white mt-0.5">${Number(mean).toLocaleString()}</p>
+              </div>
+              <div class="bg-emeraldos-900 p-1 rounded border border-white/10">
+                <p class="text-[8.5px] text-slate-400">الوسيط Median</p>
+                <p class="text-xs font-black text-emerald-400 mt-0.5">${Number(median).toLocaleString()}</p>
+              </div>
+              <div class="bg-emeraldos-900 p-1 rounded border border-white/10">
+                <p class="text-[8.5px] text-slate-400">الأقصى Max</p>
+                <p class="text-xs font-black text-sky-400 mt-0.5">${Number(max).toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleRealFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const text = e.target.result;
+          let parsedRows = [];
+          if (file.name.endsWith('.json')) {
+            const json = JSON.parse(text);
+            parsedRows = Array.isArray(json) ? json : (json.data || []);
+          } else {
+            const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            parsedRows = lines.slice(1).map((line, i) => {
+              const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+              const obj = { '#': i + 1 };
+              headers.forEach((h, idx) => {
+                const num = Number(vals[idx]);
+                obj[h] = !isNaN(num) && vals[idx] !== '' ? num : (vals[idx] || '');
+              });
+              return obj;
+            });
+          }
+
+          if (parsedRows.length === 0) return showToast('الملف فارغ أو غير صالح', 'error');
+
+          const cols = Object.keys(parsedRows[0]);
+          const numCols = cols.filter(c => c !== '#' && typeof parsedRows[0][c] === 'number');
+          const catCols = cols.filter(c => c !== '#' && typeof parsedRows[0][c] !== 'number');
+
+          activeDataset = {
+            id: 'custom',
+            name: file.name,
+            rowsCount: parsedRows.length,
+            colsCount: cols.length,
+            columns: cols,
+            numericCols: numCols.length ? numCols : [cols[cols.length - 1]],
+            catCols: catCols.length ? catCols : [cols[0]],
+            defaultX: catCols[0] || cols[0],
+            defaultY: numCols[0] || cols[1] || cols[0],
+            rows: parsedRows
+          };
+
+          applyDatasetToUI();
+          openOrSwitchTab('dashboard');
+          showToast(`تم استيراد الملف "${file.name}" بنجاح!`);
+        } catch (err) {
+          showToast('حدث خطأ أثناء قراءة الملف.', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function closeAppWindow() {
+      const win = document.getElementById('mainAppWindow');
+      win.classList.add('scale-95', 'opacity-0');
+      setTimeout(() => win.classList.add('hidden'), 200);
+      document.getElementById('taskbarAppItem').classList.remove('glow-pill-emerald');
+    }
+
+    function minimizeAppWindow() {
+      const win = document.getElementById('mainAppWindow');
+      win.classList.add('translate-y-full', 'opacity-0');
+      setTimeout(() => win.classList.add('hidden'), 200);
+      document.getElementById('taskbarAppItem').classList.remove('glow-pill-emerald');
+    }
+
+    function restoreAppWindow() {
+      const win = document.getElementById('mainAppWindow');
+      win.classList.remove('hidden', 'translate-y-full', 'scale-95', 'opacity-0');
+      document.getElementById('taskbarAppItem').classList.add('glow-pill-emerald');
+    }
+
+    function toggleMaximizeWindow() {
+      const win = document.getElementById('mainAppWindow');
+      win.classList.toggle('m-0');
+      win.classList.toggle('rounded-none');
+    }
+
+    function toggleStartMenu() {
+      document.getElementById('startMenu').classList.toggle('hidden');
+    }
+
+    function downloadChartCanvas() {
+      const canvas = currentActiveTab === 'studio' ? document.getElementById('studioCanvas') : document.getElementById('dashMainCanvas');
+      if (!canvas) return;
+      const a = document.createElement('a');
+      a.download = `Chart_${activeDataset.name.split('.')[0]}.png`;
+      a.href = canvas.toDataURL('image/png', 1.0);
+      a.click();
+      showToast('تم حفظ صورة الرسم البياني PNG!');
+    }
+
+    function exportCSVFile() {
+      const cols = activeDataset.columns;
+      const csvContent = [
+        cols.join(','),
+        ...activeDataset.rows.map(r => cols.map(c => `"${r[c]}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Exported_${activeDataset.name.split('.')[0]}.csv`;
+      a.click();
+      showToast('تم تصدير ملف CSV بنجاح!');
+    }
+
+    function openInspectorModal(rowObj) {
+      const modal = document.getElementById('inspectorModal');
+      const content = document.getElementById('inspectorContent');
+      content.innerHTML = Object.entries(rowObj).map(([k, v]) => `
+        <div class="flex items-center justify-between bg-emeraldos-950 px-2.5 py-1 rounded border border-white/10">
+          <span class="font-bold text-platgold-300">${k}:</span>
+          <span class="font-bold text-white">${v}</span>
+        </div>
+      `).join('');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeInspectorModal() {
+      const modal = document.getElementById('inspectorModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toastIcon');
+      document.getElementById('toastMsg').textContent = msg;
+
+      icon.className = type === 'error'
+        ? 'fa-solid fa-triangle-exclamation text-rose-400'
+        : 'fa-solid fa-circle-check text-platgold-400';
+
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      setTimeout(() => toast.classList.add('translate-y-24', 'opacity-0'), 2400);
+    }
+  </script>
+</body>
+</html>
