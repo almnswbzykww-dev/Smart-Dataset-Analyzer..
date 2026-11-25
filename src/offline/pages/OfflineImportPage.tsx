@@ -350,13 +350,30 @@ export const OfflineImportPage: React.FC<OfflineImportPageProps> = ({
               </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <div className="bg-emeraldos-900/70 border border-white/10 rounded-xl p-3.5 space-y-2">
-                <p className="text-xs font-black text-platgold-300">🔍 أنواع الأعمدة المكتشفة تلقائياً:</p>
-                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+            <div className="space-y-3">
+              {pendingPreview.dataset.cleaningSummary && (
+                <div className="bg-emeraldos-900/70 border border-white/10 rounded-xl p-3.5 space-y-1.5 text-[11px]">
+                  <p className="text-xs font-black text-emerald-300">🧹 تقرير التنظيف الذكي (بدون حذف البيانات الأصلية):</p>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 text-slate-200 font-bold tabular-nums">
+                    <span>• خلايا فارغة/غير صالحة معالجة: {formatOfflineNum(pendingPreview.dataset.cleaningSummary.missingHandledCount, 0)}</span>
+                    <span>• قيم رقمية مطبّعة: {formatOfflineNum(pendingPreview.dataset.cleaningSummary.numericNormalizedCount, 0)}</span>
+                    <span>• تواريخ منسّقة: {formatOfflineNum(pendingPreview.dataset.cleaningSummary.datesNormalizedCount, 0)}</span>
+                    <span>• صفوف متطابقة مرصودة (محفوظة): {formatOfflineNum(pendingPreview.dataset.cleaningSummary.duplicateRowsCount, 0)}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-emeraldos-900/70 border border-white/10 rounded-xl p-4 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-black text-platgold-300">
+                    🔍 الأعمدة المكتشفة تلقائياً ({pendingPreview.dataset.colsCount - 1} عمود):
+                  </p>
+                  <span className="text-[11px] font-bold text-slate-300">عرض شامل يدعم حتى 100+ عمود محلياً</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 max-h-72 overflow-y-auto pr-1">
                   {pendingPreview.dataset.columns
                     .filter((c) => c !== '#')
-                    .map((col) => {
+                    .map((col, idx) => {
                       const kind = pendingPreview.dataset.columnTypes?.[col] || 'text';
                       const badge =
                         kind === 'numeric'
@@ -368,38 +385,27 @@ export const OfflineImportPage: React.FC<OfflineImportPageProps> = ({
                       return (
                         <span
                           key={col}
-                          className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${badge}`}
+                          title={`${col} (${label})`}
+                          className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border truncate ${badge}`}
                         >
-                          {col} ({label})
+                          {idx + 1}. {col} ({label})
                         </span>
                       );
                     })}
                 </div>
               </div>
-
-              {pendingPreview.dataset.cleaningSummary && (
-                <div className="bg-emeraldos-900/70 border border-white/10 rounded-xl p-3.5 space-y-1.5 text-[11px]">
-                  <p className="text-xs font-black text-emerald-300">🧹 تقرير التنظيف الذكي (بدون حذف البيانات الأصلية):</p>
-                  <div className="grid grid-cols-2 gap-1.5 text-slate-200 font-bold tabular-nums">
-                    <span>• خلايا فارغة/غير صالحة معالجة: {formatOfflineNum(pendingPreview.dataset.cleaningSummary.missingHandledCount, 0)}</span>
-                    <span>• قيم رقمية مطبّعة: {formatOfflineNum(pendingPreview.dataset.cleaningSummary.numericNormalizedCount, 0)}</span>
-                    <span>• تواريخ منسّقة: {formatOfflineNum(pendingPreview.dataset.cleaningSummary.datesNormalizedCount, 0)}</span>
-                    <span>• صفوف متطابقة مرصودة (محفوظة): {formatOfflineNum(pendingPreview.dataset.cleaningSummary.duplicateRowsCount, 0)}</span>
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="space-y-1.5">
               <p className="text-xs font-black text-slate-200">
-                👁️ معاينة أول {previewRows.length} صف من أصل {formatOfflineNum(pendingPreview.dataset.rowsCount, 0)}:
+                👁️ معاينة أول {previewRows.length} صف من أصل {formatOfflineNum(pendingPreview.dataset.rowsCount, 0)} ({pendingPreview.dataset.colsCount - 1} عمود):
               </p>
-              <div className="overflow-auto rounded-xl border border-white/15 max-h-64">
-                <table className="w-full text-right border-collapse text-xs">
-                  <thead className="bg-emeraldos-900 text-platgold-300 sticky top-0 border-b border-platgold-500/35">
+              <div className="overflow-auto rounded-xl border border-white/15 max-h-[460px] w-full">
+                <table className="w-max min-w-full text-right border-collapse text-xs">
+                  <thead className="bg-emeraldos-900 text-platgold-300 sticky top-0 z-10 border-b border-platgold-500/35">
                     <tr>
                       {pendingPreview.dataset.columns.map((c) => (
-                        <th key={c} className="py-2 px-3 font-black whitespace-nowrap">
+                        <th key={c} className="py-2.5 px-3.5 font-black whitespace-nowrap min-w-[120px] border-l border-white/10">
                           {c}
                         </th>
                       ))}
@@ -409,7 +415,7 @@ export const OfflineImportPage: React.FC<OfflineImportPageProps> = ({
                     {previewRows.map((row, idx) => (
                       <tr key={idx} className="hover:bg-emeraldos-800/70">
                         {pendingPreview.dataset.columns.map((c) => (
-                          <td key={c} className="py-1.5 px-3 whitespace-nowrap text-slate-200 tabular-nums">
+                          <td key={c} className="py-2 px-3.5 whitespace-nowrap min-w-[120px] text-slate-200 tabular-nums border-l border-white/5">
                             {row[c] === '' ? <span className="text-slate-500">—</span> : String(row[c])}
                           </td>
                         ))}

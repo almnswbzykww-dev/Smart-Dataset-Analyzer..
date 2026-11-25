@@ -161,13 +161,22 @@ def make_offline_handler(state: OfflineServerState):
             if path == "/print-voucher":
                 qs = urllib.parse.parse_qs(parsed.query)
                 ds = load_csv_dataset(state.sample_csv_path, "sample_data.csv")
-                x_col = (qs.get("x") or [ds["default_x"]])[0]
-                y_col = (qs.get("y") or [ds["default_y"]])[0]
                 chart_type = (qs.get("chart") or ["Bar"])[0]
                 if chart_type not in CHART_TYPES_AR:
                     chart_type = "Bar"
-                agg = aggregate_series(ds["rows"], x_col, y_col, "sum", chart_type)
-                stats = compute_column_stats(ds["rows"], y_col) if y_col in ds["numeric_columns"] else None
+                num_cols = ds.get("numeric_columns", [])
+                y_col = (qs.get("y") or [ds["default_y"]])[0]
+                if qs.get("x"):
+                    x_col = qs["x"][0]
+                elif chart_type == "Scatter" and num_cols:
+                    x_col = next((c for c in num_cols if c != y_col), num_cols[0])
+                else:
+                    x_col = ds["default_x"]
+                try:
+                    agg = aggregate_series(ds["rows"], x_col, y_col, "sum", chart_type)
+                except ValueError:
+                    agg = aggregate_series(ds["rows"], ds["default_x"], ds["default_y"], "sum", "Bar")
+                stats = compute_column_stats(ds["rows"], y_col) if y_col in num_cols else None
                 pairs: list[tuple[str, Any]] = [
                     ("الملف", ds["name"]),
                     ("محور X", x_col),
@@ -178,7 +187,10 @@ def make_offline_handler(state: OfflineServerState):
                 if stats:
                     pairs.append(("المجموع", f"{stats['sum']:,.2f}"))
                     pairs.append(("المتوسط", f"{stats['mean']:,.2f}"))
-                table_rows = [[lbl, f"{val:,.2f}"] for lbl, val in zip(agg.get("labels", []), agg.get("values", []))]
+                if chart_type == "Scatter" and agg.get("points"):
+                    table_rows = [[f"{pt['x']:,.2f}", f"{pt['y']:,.2f}"] for pt in agg["points"][:50]]
+                else:
+                    table_rows = [[lbl, f"{val:,.2f}"] for lbl, val in zip(agg.get("labels", []), agg.get("values", []))]
                 html_doc = build_print_voucher_html(
                     title=f"تقرير تحليل {ds['name']}",
                     subtitle=f"{CHART_TYPES_AR.get(chart_type, chart_type)} — {y_col} حسب {x_col}",

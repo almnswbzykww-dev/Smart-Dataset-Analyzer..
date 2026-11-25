@@ -613,8 +613,8 @@ export default function App() {
     windowMode === 'maximized'
       ? 'm-0 rounded-none'
       : windowMode === 'compact'
-        ? 'my-4 sm:my-7 mx-auto w-[94%] max-w-5xl rounded-2xl shadow-2xl'
-        : 'm-2 sm:m-3 rounded-2xl';
+        ? 'my-3 sm:my-5 mx-auto w-[96%] max-w-6xl rounded-2xl shadow-2xl'
+        : 'm-1 sm:m-1.5 rounded-2xl';
 
   if (!authReady) {
     return (
@@ -679,9 +679,6 @@ export default function App() {
                   <h1 className="text-xs sm:text-sm font-black text-white leading-tight">
                     <span className="text-platgold-400">تطبيق بن فيصل</span> لتحليل البيانات الذكي
                   </h1>
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-sky-500/20 text-sky-200 border border-sky-400/35">
-                    🌐 النسخة السحابية (Online)
-                  </span>
                 </div>
                 <p className="text-[10px] text-emeraldos-400 font-bold hidden sm:block">
                   منصة التحليل الإحصائي والرسوم البيانية • الملف النشط: {activeDataset.name}
@@ -811,7 +808,7 @@ export default function App() {
             )}
 
             {/* ==================== MAIN WORKSPACE AREA ==================== */}
-            <main id="mainWorkspace" className="flex-1 flex flex-col overflow-hidden relative">
+            <main id="mainWorkspace" className="flex-1 min-w-0 flex flex-col overflow-hidden relative">
               {/* Multi-Instance Tab Bar */}
               {openInstances.length > 0 && currentInstanceId && (
                 <div className="flex items-center justify-between px-4 py-2 bg-emeraldos-950/80 border-b border-platgold-500/30 gap-2 overflow-x-auto shrink-0 backdrop-blur-md">
@@ -860,7 +857,7 @@ export default function App() {
               {!activeInstance ? (
                 <CinematicHome />
               ) : (
-                <div id="pagesContainer" className="flex-1 overflow-y-auto p-4">
+                <div id="pagesContainer" className="flex-1 min-w-0 overflow-y-auto p-3 sm:p-4 lg:p-5">
                   {(() => {
                     const ds = datasets[activeInstance.datasetKey] || activeDataset;
                     if (activeInstance.type === 'dashboard') {

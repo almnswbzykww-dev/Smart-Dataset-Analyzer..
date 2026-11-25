@@ -44,12 +44,12 @@ export function buildOfflineVoucherHtml(params: {
   const companyBlock = hasCompanyHeader
     ? `
       <div class="company-header">
-        <div>
+        ${safeLogo ? `<img src="${safeLogo}" alt="شعار الشركة" class="company-logo" />` : ''}
+        <div class="company-info">
           ${company.companyName ? `<h1>${escapeHtml(company.companyName)}</h1>` : ''}
           ${company.location ? `<p>📍 الموقع: ${escapeHtml(company.location)}</p>` : ''}
           ${company.address ? `<p>🏢 العنوان: ${escapeHtml(company.address)}</p>` : ''}
         </div>
-        ${safeLogo ? `<img src="${safeLogo}" alt="شعار الشركة" class="company-logo" />` : ''}
       </div>`
     : '';
 
@@ -92,21 +92,23 @@ export function buildOfflineVoucherHtml(params: {
       ? `
       <section class="section">
         <div class="section-title">📑 جدول البيانات والنتائج التفصيلية</div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              ${payload.tableHeaders.map((h) => `<th>${escapeHtml(h)}</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>
-            ${payload.tableRows
-              .map(
-                (row) =>
-                  `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`
-              )
-              .join('')}
-          </tbody>
-        </table>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                ${payload.tableHeaders.map((h) => `<th>${escapeHtml(h)}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${payload.tableRows
+                .map(
+                  (row) =>
+                    `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`
+                )
+                .join('')}
+            </tbody>
+          </table>
+        </div>
       </section>`
       : '';
 
@@ -155,22 +157,27 @@ export function buildOfflineVoucherHtml(params: {
     .voucher-meta { text-align: left; font-size: 11px; line-height: 1.6; color: #e2e8f0; }
     .company-header {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+      justify-content: center;
+      text-align: center;
+      gap: 10px;
       border-bottom: 2px solid #0f766e;
       padding-bottom: 14px;
       margin-bottom: 16px;
     }
+    .company-info { text-align: center; }
     .company-header h1 { margin: 0; font-size: 20px; color: #0f172a; }
     .company-header p { margin: 4px 0 0; font-size: 12px; color: #334155; font-weight: 600; }
     .company-logo {
-      max-height: 74px;
-      max-width: 150px;
+      display: block;
+      margin: 0 auto;
+      max-height: 92px;
+      max-width: 220px;
       object-fit: contain;
       border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      padding: 4px;
+      border-radius: 10px;
+      padding: 5px;
       background: #ffffff;
     }
     .doc-title-row {
@@ -187,7 +194,9 @@ export function buildOfflineVoucherHtml(params: {
     .doc-title-row .subtitle { margin: 4px 0 0; font-size: 12px; color: #475569; font-weight: 600; }
     .section { margin-bottom: 16px; page-break-inside: avoid; }
     .section-title { font-size: 13px; font-weight: 800; color: #064e3b; margin-bottom: 8px; }
+    .table-wrap { width: 100%; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .data-table { width: max-content; min-width: 100%; }
     .summary-table th, .summary-table td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: right; }
     .summary-table th { background: #f1f5f9; color: #0f172a; font-weight: 800; width: 50%; }
     .summary-table .label-cell { font-weight: 700; color: #1e293b; }

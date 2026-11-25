@@ -43,12 +43,15 @@ export const OfflineReportsPage: React.FC<OfflineReportsPageProps> = ({
   const reportData = useMemo(() => {
     const agg = aggregateOfflineData(dataset, instance.xCol, instance.yCol, instance.aggMode);
     let total = 0;
-    let maxVal = agg.values.length ? -Infinity : 0;
-    let minVal = agg.values.length ? Infinity : 0;
+    let maxVal = -Infinity;
+    let minVal = Infinity;
     let maxIdx = 0;
     let minIdx = 0;
+    let finiteCount = 0;
     for (let i = 0; i < agg.values.length; i++) {
-      const v = agg.values[i];
+      const v = Number(agg.values[i]);
+      if (!Number.isFinite(v)) continue;
+      finiteCount++;
       total += v;
       if (v > maxVal) {
         maxVal = v;
@@ -59,20 +62,30 @@ export const OfflineReportsPage: React.FC<OfflineReportsPageProps> = ({
         minIdx = i;
       }
     }
-    const avg = agg.values.length ? total / agg.values.length : 0;
+    if (finiteCount === 0) {
+      maxVal = 0;
+      minVal = 0;
+    }
+    const avg = finiteCount ? total / finiteCount : 0;
     const maxLabel = agg.labels[maxIdx] || '—';
     const minLabel = agg.labels[minIdx] || '—';
     const colStats = computeOfflineColumnStats(dataset, instance.yCol);
+    const summarizeCols = (cols: string[]) =>
+      cols.length === 0
+        ? 'لا يوجد'
+        : cols.length > 15
+          ? `${cols.slice(0, 15).join('، ')} (+${cols.length - 15} عمود آخر)`
+          : cols.join('، ');
 
     const summaryPairs: Array<{ name: string; value: string }> = [
       { name: 'اسم ملف البيانات', value: dataset.label || dataset.name },
       { name: 'عدد السجلات', value: formatOfflineNum(dataset.rowsCount, 0) },
       { name: 'عدد الأعمدة', value: String(dataset.colsCount) },
-      { name: 'الأعمدة الرقمية', value: dataset.numericCols.join('، ') || 'لا يوجد' },
+      { name: `الأعمدة الرقمية (${dataset.numericCols.length})`, value: summarizeCols(dataset.numericCols) },
       ...(dataset.dateCols && dataset.dateCols.length
-        ? [{ name: 'أعمدة التواريخ', value: dataset.dateCols.join('، ') }]
+        ? [{ name: `أعمدة التواريخ (${dataset.dateCols.length})`, value: summarizeCols(dataset.dateCols) }]
         : []),
-      { name: 'الأعمدة الفئوية / النصية', value: dataset.catCols.join('، ') || 'لا يوجد' },
+      { name: `الأعمدة الفئوية / النصية (${dataset.catCols.length})`, value: summarizeCols(dataset.catCols) },
       { name: 'معيار التجميع المختار', value: `${instance.yCol} حسب ${instance.xCol} (${OFFLINE_AGG_LABELS_AR[instance.aggMode]})` },
       { name: `إجمالي ${instance.yCol}`, value: formatOfflineNum(total) },
       { name: 'المتوسط الحسابي', value: formatOfflineNum(colStats ? colStats.mean : avg) },
@@ -83,11 +96,15 @@ export const OfflineReportsPage: React.FC<OfflineReportsPageProps> = ({
     ];
 
     const breakdown = agg.labels
-      .map((l, i) => ({
-        label: l,
-        val: agg.values[i],
-        pct: total ? ((agg.values[i] / total) * 100).toFixed(1) : '0.0',
-      }))
+      .map((l, i) => {
+        const rawV = Number(agg.values[i]);
+        const safeV = Number.isFinite(rawV) ? rawV : 0;
+        return {
+          label: l,
+          val: safeV,
+          pct: total !== 0 ? ((safeV / total) * 100).toFixed(1) : '0.0',
+        };
+      })
       .sort((a, b) => b.val - a.val);
 
     return { summaryPairs, breakdown, total, maxLabel };
@@ -185,22 +202,22 @@ export const OfflineReportsPage: React.FC<OfflineReportsPageProps> = ({
       </div>
 
       {hasCompany && (
-        <div className="bg-white text-slate-900 rounded-2xl p-5 border-2 border-platgold-500/50 shadow-lg flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1">
-            <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+        <div className="bg-white text-slate-900 rounded-2xl p-5 border-2 border-platgold-500/50 shadow-lg flex flex-col items-center justify-center text-center gap-2.5">
+          {company.logoDataUrl && (
+            <img
+              src={company.logoDataUrl}
+              alt={company.companyName || 'شعار الشركة'}
+              className="mx-auto max-h-20 max-w-[200px] object-contain rounded-xl border border-slate-200 p-1.5 bg-white"
+            />
+          )}
+          <div className="space-y-1 text-center">
+            <span className="inline-block text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
               ترويسة الشركة في الطباعة
             </span>
             {company.companyName && <h3 className="text-lg font-black text-slate-900">{company.companyName}</h3>}
             {company.location && <p className="text-xs font-bold text-slate-600">📍 الموقع: {company.location}</p>}
             {company.address && <p className="text-xs font-medium text-slate-500">🏢 العنوان: {company.address}</p>}
           </div>
-          {company.logoDataUrl && (
-            <img
-              src={company.logoDataUrl}
-              alt={company.companyName || 'شعار الشركة'}
-              className="max-h-16 max-w-[140px] object-contain rounded-lg border border-slate-200 p-1"
-            />
-          )}
         </div>
       )}
 

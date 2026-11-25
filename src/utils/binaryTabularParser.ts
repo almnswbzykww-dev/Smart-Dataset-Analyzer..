@@ -548,7 +548,7 @@ export interface PdfTextToken {
 }
 
 export function extractTabularFromPdfPages(pagesTokens: PdfTextToken[][]): ParsedTabularResult {
-  const pageLines: Array<{ page: number; cells: string[]; fullLine: string }> = [];
+  const pageLines: Array<{ page: number; cells: string[]; fullLine: string; splitSource: 'gap' | 'delim' | 'comma' | 'single' }> = [];
 
   for (let pIdx = 0; pIdx < pagesTokens.length; pIdx++) {
     const tokens = pagesTokens[pIdx].filter((t) => t.str && t.str.trim() !== '');
@@ -603,15 +603,18 @@ export function extractTabularFromPdfPages(pagesTokens: PdfTextToken[][]): Parse
       if (!cells.length) continue;
 
       let finalCells = cells;
+      let splitSource: 'gap' | 'delim' | 'comma' | 'single' = finalCells.length >= 2 ? 'gap' : 'single';
+
       if (finalCells.length === 1) {
         const single = finalCells[0];
-        for (const sep of ['\t', '|', ';', ',']) {
+        for (const sep of ['\t', '|', ';']) {
           const split = single
             .split(sep)
             .map((s) => s.trim())
             .filter(Boolean);
           if (split.length >= 2) {
             finalCells = split;
+            splitSource = 'delim';
             break;
           }
         }
@@ -623,6 +626,19 @@ export function extractTabularFromPdfPages(pagesTokens: PdfTextToken[][]): Parse
             .filter(Boolean);
           if (wsSplit.length >= 2) {
             finalCells = wsSplit;
+            splitSource = 'delim';
+          }
+        }
+        // Comma fallback only if line does not look like long prose sentence
+        if (finalCells.length === 1 && single.includes(',')) {
+          const commaSplit = single
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+          const avgLen = commaSplit.reduce((acc, s) => acc + s.length, 0) / Math.max(1, commaSplit.length);
+          if (commaSplit.length >= 2 && avgLen <= 36) {
+            finalCells = commaSplit;
+            splitSource = 'comma';
           }
         }
       }
@@ -633,16 +649,19 @@ export function extractTabularFromPdfPages(pagesTokens: PdfTextToken[][]): Parse
           page: pIdx + 1,
           cells: finalCells,
           fullLine,
+          splitSource,
         });
       }
     }
   }
 
   if (!pageLines.length) {
-    throw new Error('ملف PDF لا يحتوي على نصوص قابلة للقراءة (قد يكون ملفاً مصوراً بالماسح الضوئي فقط).');
+    throw new Error(
+      'ملف PDF مصوّر بالماسح الضوئي (لا يحتوي على طبقة نصية قابلة للاستخراج) ويحتاج إلى تحويل عبر OCR أولاً.'
+    );
   }
 
-  // Check if the PDF contains a clear multi-column table
+  // Strict multi-column table validation across pages (do NOT coerce narrative paragraphs into fake tables)
   const multiColLines = pageLines.filter((l) => l.cells.length >= 2);
   if (multiColLines.length >= 2) {
     const colFreq = new Map<number, number>();
@@ -659,10 +678,13 @@ export function extractTabularFromPdfPages(pagesTokens: PdfTextToken[][]): Parse
     }
 
     const tableCandidates = multiColLines.filter(
-      (l) => l.cells.length === dominantCols || Math.abs(l.cells.length - dominantCols) <= 1
+      (l) => l.cells.length === dominantCols || (dominantCols >= 3 && Math.abs(l.cells.length - dominantCols) <= 1)
     );
 
-    if (tableCandidates.length >= 2) {
+    const exactOrNearRatio = tableCandidates.length / Math.max(1, pageLines.length);
+    const hasStructuralSignal = tableCandidates.some((l) => l.splitSource === 'gap' || l.splitSource === 'delim');
+
+    if (tableCandidates.length >= 2 && (hasStructuralSignal || exactOrNearRatio >= 0.45)) {
       const headerRow = tableCandidates[0].cells;
       const headerSig = headerRow.join('|');
       const dedupedBody = tableCandidates
@@ -677,22 +699,9 @@ export function extractTabularFromPdfPages(pagesTokens: PdfTextToken[][]): Parse
     }
   }
 
-  // Structured fallback for narrative / report PDFs without grid columns
-  const headers = ['الصفحة', 'رقم_السطر', 'المحتوى', 'القيمة_الرقمية', 'عدد_الكلمات'];
-  const rawRows = pageLines.map((ln, idx) => {
-    const numMatch = ln.fullLine.replace(/,/g, '').match(/-?\d+(?:\.\d+)?/);
-    const numericVal = numMatch ? Number(numMatch[0]) : 0;
-    const wordsCount = ln.fullLine.split(/\s+/).filter(Boolean).length;
-    return [
-      `صفحة ${ln.page}`,
-      idx + 1,
-      ln.fullLine,
-      Number.isFinite(numericVal) ? numericVal : 0,
-      wordsCount,
-    ];
-  });
-
-  return { headers, rawRows, sourceFormat: 'PDF' };
+  throw new Error(
+    'لم يتم اكتشاف بنية جدول منظمة داخل ملف PDF (النصوص العادية والفقرات لا تُعامل كجدول إلا عند وجود أعمدة وصفوف جدولية واضحة).'
+  );
 }
 
 export async function parsePdfArrayBuffer(buffer: ArrayBuffer): Promise<ParsedTabularResult> {

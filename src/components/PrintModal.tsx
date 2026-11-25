@@ -201,8 +201,17 @@ export const PrintModal: React.FC<PrintModalProps> = ({
 
           {/* Dynamic Company Header */}
           {hasCompanyHeader && (
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-emerald-700 pb-4">
-              <div className="space-y-1">
+            <div className="flex flex-col items-center justify-center text-center gap-2.5 border-b-2 border-emerald-700 pb-4">
+              {company.logoDataUrl && (
+                <div className="shrink-0">
+                  <img
+                    src={company.logoDataUrl}
+                    alt={company.companyName || 'شعار الشركة'}
+                    className="mx-auto max-h-24 max-w-[220px] object-contain rounded-xl border border-slate-200 p-1.5 bg-white shadow-xs"
+                  />
+                </div>
+              )}
+              <div className="space-y-1 text-center">
                 {company.companyName && (
                   <h1 className="text-xl font-black text-slate-900">{company.companyName}</h1>
                 )}
@@ -213,15 +222,6 @@ export const PrintModal: React.FC<PrintModalProps> = ({
                   <p className="text-xs font-medium text-slate-600">🏢 العنوان: {company.address}</p>
                 )}
               </div>
-              {company.logoDataUrl && (
-                <div className="shrink-0">
-                  <img
-                    src={company.logoDataUrl}
-                    alt={company.companyName || 'شعار الشركة'}
-                    className="max-h-20 max-w-[180px] object-contain rounded-lg border border-slate-200 p-1 bg-white"
-                  />
-                </div>
-              )}
             </div>
           )}
 

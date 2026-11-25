@@ -257,18 +257,18 @@ export const OfflineStatsPage: React.FC<OfflineStatsPageProps> = ({
         </div>
       </div>
 
-      {/* Main Large Numeric Statistics Table */}
-      <div className="bg-emeraldos-900/95 rounded-2xl p-5 border border-platgold-500/35 flex-1 flex flex-col gap-6 shadow-xl">
-        <div className="space-y-3">
+      {/* Main Large Numeric & Categorical Columns Analysis */}
+      <div className="bg-emeraldos-900/95 rounded-2xl p-5 sm:p-6 border border-platgold-500/35 flex-1 flex flex-col gap-6 shadow-xl min-w-0">
+        <div className="space-y-3 min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 pb-3">
             <div>
               <h3 className="text-base font-black text-white">🧮 جدول التحليل الإحصائي الوصفي للأعمدة الرقمية</h3>
               <p className="text-xs text-slate-300 mt-0.5">
-                عرض جدولي شامل لجميع المقاييس الإحصائية محلياً (المجموع، المتوسط، الوسيط، الانحراف المعياري، الربيعيات، والمدى)
+                عرض جدولي واسع يدعم حتى 100+ عمود محلياً مع كافة المقاييس الإحصائية بدون أي تضييق أو قص
               </p>
             </div>
             <span className="text-xs bg-platgold-500/20 text-platgold-200 border border-platgold-400/35 px-3 py-1 rounded-xl font-bold tabular-nums">
-              {filteredStats.length} عمود رقمي
+              {filteredStats.length} عمود رقمي معروض
             </span>
           </div>
 
@@ -277,45 +277,45 @@ export const OfflineStatsPage: React.FC<OfflineStatsPageProps> = ({
               لا توجد أعمدة رقمية مطابقة لعرضها في الجدول الإحصائي.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-2xl border border-platgold-500/30 shadow-inner">
-              <table className="w-full text-right border-collapse text-xs sm:text-sm min-w-[980px]">
-                <thead className="bg-emeraldos-950 text-platgold-300 border-b border-platgold-500/40">
+            <div className="overflow-auto rounded-2xl border border-platgold-500/30 shadow-inner max-h-[68vh] w-full">
+              <table className="w-max min-w-full text-right border-collapse text-xs sm:text-sm">
+                <thead className="bg-emeraldos-950 text-platgold-300 border-b border-platgold-500/40 sticky top-0 z-20">
                   <tr>
-                    <th className="py-3 px-3 font-black w-10">#</th>
-                    <th className="py-3 px-3 font-black">اسم العمود</th>
-                    <th className="py-3 px-3 font-black">العدد</th>
-                    <th className="py-3 px-3 font-black">المجموع (Sum)</th>
-                    <th className="py-3 px-3 font-black">المتوسط (Mean)</th>
-                    <th className="py-3 px-3 font-black">الوسيط (Median)</th>
-                    <th className="py-3 px-3 font-black">الانحراف المعياري</th>
-                    <th className="py-3 px-3 font-black">الأدنى (Min)</th>
-                    <th className="py-3 px-3 font-black">الربيع الأول (Q1)</th>
-                    <th className="py-3 px-3 font-black">الربيع الثالث (Q3)</th>
-                    <th className="py-3 px-3 font-black">الأقصى (Max)</th>
-                    <th className="py-3 px-3 font-black">المدى (Range)</th>
+                    <th className="py-3.5 px-4 font-black w-14 sticky right-0 z-30 bg-emeraldos-950 border-l border-white/10">#</th>
+                    <th className="py-3.5 px-4 font-black min-w-[180px] sticky right-14 z-30 bg-emeraldos-950 border-l border-white/10">اسم العمود</th>
+                    <th className="py-3.5 px-4 font-black min-w-[100px] whitespace-nowrap">العدد</th>
+                    <th className="py-3.5 px-4 font-black min-w-[130px] whitespace-nowrap">المجموع (Sum)</th>
+                    <th className="py-3.5 px-4 font-black min-w-[130px] whitespace-nowrap">المتوسط (Mean)</th>
+                    <th className="py-3.5 px-4 font-black min-w-[130px] whitespace-nowrap">الوسيط (Median)</th>
+                    <th className="py-3.5 px-4 font-black min-w-[140px] whitespace-nowrap">الانحراف المعياري</th>
+                    <th className="py-3.5 px-4 font-black min-w-[120px] whitespace-nowrap">الأدنى (Min)</th>
+                    <th className="py-3.5 px-4 font-black min-w-[130px] whitespace-nowrap">الربيع الأول (Q1)</th>
+                    <th className="py-3.5 px-4 font-black min-w-[130px] whitespace-nowrap">الربيع الثالث (Q3)</th>
+                    <th className="py-3.5 px-4 font-black min-w-[120px] whitespace-nowrap">الأقصى (Max)</th>
+                    <th className="py-3.5 px-4 font-black min-w-[120px] whitespace-nowrap">المدى (Range)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10 bg-emeraldos-950/65">
                   {filteredStats.map((s, idx) => (
                     <tr key={s.column} className="hover:bg-emeraldos-800/75 transition">
-                      <td className="py-3 px-3 font-bold text-platgold-400 tabular-nums">#{idx + 1}</td>
-                      <td className="py-3 px-3 font-black text-white whitespace-nowrap">{s.column}</td>
-                      <td className="py-3 px-3 font-bold text-slate-200 tabular-nums">
+                      <td className="py-3 px-4 font-bold text-platgold-400 tabular-nums sticky right-0 z-10 bg-emeraldos-950/95 border-l border-white/10">#{idx + 1}</td>
+                      <td className="py-3 px-4 font-black text-white whitespace-nowrap sticky right-14 z-10 bg-emeraldos-950/95 border-l border-white/10">{s.column}</td>
+                      <td className="py-3 px-4 font-bold text-slate-200 tabular-nums whitespace-nowrap">
                         {formatOfflineNum(s.count, 0)}
                       </td>
-                      <td className="py-3 px-3 font-black text-platgold-300 tabular-nums">{formatOfflineNum(s.sum)}</td>
-                      <td className="py-3 px-3 font-black text-white tabular-nums">{formatOfflineNum(s.mean, 2)}</td>
-                      <td className="py-3 px-3 font-black text-emerald-400 tabular-nums">
+                      <td className="py-3 px-4 font-black text-platgold-300 tabular-nums whitespace-nowrap">{formatOfflineNum(s.sum)}</td>
+                      <td className="py-3 px-4 font-black text-white tabular-nums whitespace-nowrap">{formatOfflineNum(s.mean, 2)}</td>
+                      <td className="py-3 px-4 font-black text-emerald-400 tabular-nums whitespace-nowrap">
                         {formatOfflineNum(s.median, 2)}
                       </td>
-                      <td className="py-3 px-3 font-bold text-cyan-300 tabular-nums">
+                      <td className="py-3 px-4 font-bold text-cyan-300 tabular-nums whitespace-nowrap">
                         {formatOfflineNum(s.stdDev, 2)}
                       </td>
-                      <td className="py-3 px-3 font-bold text-amber-300 tabular-nums">{formatOfflineNum(s.min)}</td>
-                      <td className="py-3 px-3 font-bold text-slate-200 tabular-nums">{formatOfflineNum(s.q1, 2)}</td>
-                      <td className="py-3 px-3 font-bold text-slate-200 tabular-nums">{formatOfflineNum(s.q3, 2)}</td>
-                      <td className="py-3 px-3 font-black text-sky-400 tabular-nums">{formatOfflineNum(s.max)}</td>
-                      <td className="py-3 px-3 font-bold text-violet-300 tabular-nums">
+                      <td className="py-3 px-4 font-bold text-amber-300 tabular-nums whitespace-nowrap">{formatOfflineNum(s.min)}</td>
+                      <td className="py-3 px-4 font-bold text-slate-200 tabular-nums whitespace-nowrap">{formatOfflineNum(s.q1, 2)}</td>
+                      <td className="py-3 px-4 font-bold text-slate-200 tabular-nums whitespace-nowrap">{formatOfflineNum(s.q3, 2)}</td>
+                      <td className="py-3 px-4 font-black text-sky-400 tabular-nums whitespace-nowrap">{formatOfflineNum(s.max)}</td>
+                      <td className="py-3 px-4 font-bold text-violet-300 tabular-nums whitespace-nowrap">
                         {formatOfflineNum(s.max - s.min)}
                       </td>
                     </tr>
@@ -327,7 +327,7 @@ export const OfflineStatsPage: React.FC<OfflineStatsPageProps> = ({
         </div>
 
         {/* Categorical / Text Columns Summary Table */}
-        <div className="space-y-3">
+        <div className="space-y-3 min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 pb-3">
             <div>
               <h3 className="text-base font-black text-white">🏷️ جدول ملخص الأعمدة النصية والفئوية</h3>
@@ -336,7 +336,7 @@ export const OfflineStatsPage: React.FC<OfflineStatsPageProps> = ({
               </p>
             </div>
             <span className="text-xs bg-sky-500/20 text-sky-200 border border-sky-400/35 px-3 py-1 rounded-xl font-bold tabular-nums">
-              {filteredCats.length} عمود نصي
+              {filteredCats.length} عمود نصي معروض
             </span>
           </div>
 
@@ -345,31 +345,31 @@ export const OfflineStatsPage: React.FC<OfflineStatsPageProps> = ({
               لا توجد أعمدة نصية أو فئوية مطابقة في هذا الملف.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-2xl border border-sky-500/30 shadow-inner">
-              <table className="w-full text-right border-collapse text-xs sm:text-sm">
-                <thead className="bg-emeraldos-950 text-sky-300 border-b border-sky-500/35">
+            <div className="overflow-auto rounded-2xl border border-sky-500/30 shadow-inner max-h-[65vh] w-full">
+              <table className="w-max min-w-full text-right border-collapse text-xs sm:text-sm">
+                <thead className="bg-emeraldos-950 text-sky-300 border-b border-sky-500/35 sticky top-0 z-20">
                   <tr>
-                    <th className="py-3 px-4 font-black w-10">#</th>
-                    <th className="py-3 px-4 font-black">اسم العمود</th>
-                    <th className="py-3 px-4 font-black">السجلات غير الفارغة</th>
-                    <th className="py-3 px-4 font-black">عدد القيم الفريدة</th>
-                    <th className="py-3 px-4 font-black">القيمة الأكثر تكراراً</th>
-                    <th className="py-3 px-4 font-black">عدد ونسبة التكرار</th>
+                    <th className="py-3.5 px-4 font-black w-14 sticky right-0 z-30 bg-emeraldos-950 border-l border-white/10">#</th>
+                    <th className="py-3.5 px-4 font-black min-w-[200px] sticky right-14 z-30 bg-emeraldos-950 border-l border-white/10">اسم العمود</th>
+                    <th className="py-3.5 px-4 font-black min-w-[160px] whitespace-nowrap">السجلات غير الفارغة</th>
+                    <th className="py-3.5 px-4 font-black min-w-[150px] whitespace-nowrap">عدد القيم الفريدة</th>
+                    <th className="py-3.5 px-4 font-black min-w-[200px] whitespace-nowrap">القيمة الأكثر تكراراً</th>
+                    <th className="py-3.5 px-4 font-black min-w-[170px] whitespace-nowrap">عدد ونسبة التكرار</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10 bg-emeraldos-950/65">
                   {filteredCats.map((cat, idx) => (
                     <tr key={cat.column} className="hover:bg-emeraldos-800/75 transition">
-                      <td className="py-3 px-4 font-bold text-platgold-400 tabular-nums">#{idx + 1}</td>
-                      <td className="py-3 px-4 font-black text-white">{cat.column}</td>
-                      <td className="py-3 px-4 font-bold text-slate-200 tabular-nums">
+                      <td className="py-3 px-4 font-bold text-platgold-400 tabular-nums sticky right-0 z-10 bg-emeraldos-950/95 border-l border-white/10">#{idx + 1}</td>
+                      <td className="py-3 px-4 font-black text-white whitespace-nowrap sticky right-14 z-10 bg-emeraldos-950/95 border-l border-white/10">{cat.column}</td>
+                      <td className="py-3 px-4 font-bold text-slate-200 tabular-nums whitespace-nowrap">
                         {formatOfflineNum(cat.nonEmptyCount, 0)}
                       </td>
-                      <td className="py-3 px-4 font-black text-sky-300 tabular-nums">
+                      <td className="py-3 px-4 font-black text-sky-300 tabular-nums whitespace-nowrap">
                         {formatOfflineNum(cat.uniqueCount, 0)}
                       </td>
-                      <td className="py-3 px-4 font-bold text-emerald-300">{cat.topValue}</td>
-                      <td className="py-3 px-4 font-bold text-platgold-200 tabular-nums">
+                      <td className="py-3 px-4 font-bold text-emerald-300 whitespace-nowrap">{cat.topValue}</td>
+                      <td className="py-3 px-4 font-bold text-platgold-200 tabular-nums whitespace-nowrap">
                         {cat.topCount} مرة ({cat.topPct}%)
                       </td>
                     </tr>

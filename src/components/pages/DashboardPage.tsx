@@ -8,7 +8,11 @@ import {
   type PageInstance,
   type PrintPayload,
 } from '../../types/app';
-import { aggregateDataForDataset, exportDatasetCSV, formatNum, isNumericColumn } from '../../utils/csvParser';
+import {
+  detectSmartColumnKind,
+  formatColumnKindLabel,
+} from '../../utils/smartDataEngine';
+import { aggregateDataForDataset, exportDatasetCSV, formatNum } from '../../utils/csvParser';
 import { ChartRenderer, type ChartRendererHandle } from '../ChartRenderer';
 import { PageToolbar } from '../PageToolbar';
 
@@ -41,49 +45,37 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 }) => {
   const mainChartRef = useRef<ChartRendererHandle | null>(null);
 
+  const featureCols = useMemo(() => dataset.columns.filter((c) => c !== '#'), [dataset.columns]);
+
+  const colKinds = useMemo(() => {
+    const map: Record<string, ReturnType<typeof detectSmartColumnKind>> = {};
+    for (const col of featureCols) {
+      map[col] = detectSmartColumnKind(dataset, col);
+    }
+    return map;
+  }, [dataset, featureCols]);
+
+  const yDisplayLabel = !instance.yCol || instance.yCol === '__auto__' ? 'التكرار التلقائي' : instance.yCol;
+
   const handleChartTypeChange = (nextType: ChartType) => {
-    if (nextType === 'Scatter') {
-      const numericCols = dataset.numericCols.filter((c) => isNumericColumn(dataset.rows, c, dataset.columnTypes));
-      const nextY = isNumericColumn(dataset.rows, instance.yCol, dataset.columnTypes)
-        ? instance.yCol
-        : numericCols[0] || instance.yCol;
-      const xIsNumeric = isNumericColumn(dataset.rows, instance.xCol, dataset.columnTypes);
-      const nextX =
-        xIsNumeric && (instance.xCol !== nextY || numericCols.length < 2)
-          ? instance.xCol
-          : numericCols.find((c) => c !== nextY) || numericCols[0] || instance.xCol;
-
-      onUpdateConfig(instance.instanceId, {
-        chartType: nextType,
-        xCol: nextX,
-        yCol: nextY,
-      });
-
-      if (nextX !== instance.xCol || nextY !== instance.yCol) {
-        onToast(`تم ضبط المحورين (${nextX} و ${nextY}) لعرض مخطط التشتت تلقائياً!`);
-      }
-      return;
-    }
-    if (nextType === 'Line' && dataset.dateCols && dataset.dateCols.length > 0 && !dataset.dateCols.includes(instance.xCol)) {
-      const dateX = dataset.dateCols[0];
-      onUpdateConfig(instance.instanceId, { chartType: nextType, xCol: dateX });
-      onToast(`تم اختيار عمود التاريخ (${dateX}) تلقائياً لعرض المخطط الخطي الزمني!`);
-      return;
-    }
     onUpdateConfig(instance.instanceId, { chartType: nextType });
   };
 
-  const { labels, values, items, totalSum, avgVal, maxVal, minVal, maxLabel, minLabel } = useMemo(() => {
-    const agg = aggregateDataForDataset(dataset, instance.xCol, instance.yCol, instance.aggMode);
+  const { labels, items, totalSum, avgVal, maxVal, minVal, maxLabel, minLabel } = useMemo(() => {
+    const effectiveMode = !instance.yCol || instance.yCol === '__auto__' ? 'count' : instance.aggMode;
+    const agg = aggregateDataForDataset(dataset, instance.xCol, instance.yCol, effectiveMode);
     let total = 0;
-    let maxV = agg.values.length ? -Infinity : 0;
-    let minV = agg.values.length ? Infinity : 0;
+    let validCount = 0;
+    let maxV = -Infinity;
+    let minV = Infinity;
     let maxI = 0;
     let minI = 0;
 
     for (let i = 0; i < agg.values.length; i++) {
-      const v = agg.values[i];
+      const raw = agg.values[i];
+      const v = Number.isFinite(raw) ? raw : 0;
       total += v;
+      validCount++;
       if (v > maxV) {
         maxV = v;
         maxI = i;
@@ -93,25 +85,31 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         minI = i;
       }
     }
-    const avg = agg.values.length ? total / agg.values.length : 0;
+    const safeTotal = Number.isFinite(total) ? total : 0;
+    const safeMax = validCount > 0 && Number.isFinite(maxV) ? maxV : 0;
+    const safeMin = validCount > 0 && Number.isFinite(minV) ? minV : 0;
+    const avg = validCount > 0 && Number.isFinite(safeTotal / validCount) ? safeTotal / validCount : 0;
 
     const sortedItems = agg.labels
-      .map((l, i) => ({
-        label: l,
-        val: agg.values[i],
-        pct: total ? ((agg.values[i] / total) * 100).toFixed(1) : '0.0',
-        diff: agg.values[i] - avg,
-      }))
+      .map((l, i) => {
+        const val = Number.isFinite(agg.values[i]) ? agg.values[i] : 0;
+        const pctNum = safeTotal !== 0 && Number.isFinite(safeTotal) ? (val / safeTotal) * 100 : 0;
+        return {
+          label: l,
+          val,
+          pct: Number.isFinite(pctNum) ? pctNum.toFixed(1) : '0.0',
+          diff: Number.isFinite(val - avg) ? val - avg : 0,
+        };
+      })
       .sort((a, b) => b.val - a.val);
 
     return {
       labels: agg.labels,
-      values: agg.values,
       items: sortedItems,
-      totalSum: total,
+      totalSum: safeTotal,
       avgVal: avg,
-      maxVal: maxV,
-      minVal: minV,
+      maxVal: safeMax,
+      minVal: safeMin,
       maxLabel: agg.labels[maxI] || '',
       minLabel: agg.labels[minI] || '',
     };
@@ -121,13 +119,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     const imgUrl = mainChartRef.current?.getPngDataUrl() || undefined;
     onRequestPrint({
       kind: 'chart',
-      title: `مخطط لوحة القيادة: ${instance.yCol} حسب ${instance.xCol} (${CHART_TYPE_LABELS_AR[instance.chartType]})`,
+      title: `مخطط لوحة القيادة: ${yDisplayLabel} حسب ${instance.xCol} (${CHART_TYPE_LABELS_AR[instance.chartType]})`,
       subtitle: `المصدر: ${dataset.name} • التجميع: ${AGG_MODE_LABELS_AR[instance.aggMode]}`,
       chartImageDataUrl: imgUrl,
       summaryPairs: [
         { name: 'اسم الملف', value: dataset.name },
-        { name: 'المحور الأفقي (X)', value: instance.xCol },
-        { name: 'المحور الرأسي (Y)', value: instance.yCol },
+        { name: 'محور X', value: instance.xCol },
+        { name: 'محور Y', value: yDisplayLabel },
         { name: 'نوع المخطط', value: CHART_TYPE_LABELS_AR[instance.chartType] },
         { name: 'المجموع الإجمالي', value: formatNum(totalSum) },
         { name: 'المتوسط الحسابي', value: formatNum(avgVal) },
@@ -147,20 +145,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         printLabel="🖨️ طباعة المخطط"
         onSave={() =>
           onRequestSave(
-            `لوحة القيادة (${dataset.name}): إجمالي ${instance.yCol} = ${formatNum(totalSum)}، المتوسط = ${formatNum(avgVal)}، الأعلى: ${maxLabel}`
+            `لوحة القيادة (${dataset.name}): إجمالي ${yDisplayLabel} = ${formatNum(totalSum)}، المتوسط = ${formatNum(avgVal)}، الأعلى: ${maxLabel}`
           )
         }
         onCloseToHome={onCloseToHome}
       />
 
-      {/* Page-Specific Controls Bar (Single Chart-Type Dropdown, No Duplicates) */}
-      <div className="bg-emeraldos-900/90 border border-platgold-500/30 rounded-2xl p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 items-end">
+      {/* Page-Specific Controls Bar */}
+      <div className="bg-emeraldos-900/90 border border-platgold-500/30 rounded-2xl p-3.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
         <div>
           <label className="block text-[10px] font-bold text-platgold-300 mb-1">📂 مصدر البيانات:</label>
           <select
             value={instance.datasetKey}
             onChange={(e) => onChangeDataset(instance.instanceId, e.target.value)}
-            className="w-full bg-emeraldos-950 text-white font-bold text-xs rounded-lg p-2 border border-platgold-500/30"
+            className="w-full bg-emeraldos-950 text-white font-bold text-xs rounded-lg p-2.5 border border-platgold-500/30"
           >
             {Object.values(datasets).map((ds) => (
               <option key={ds.id} value={ds.id}>
@@ -171,36 +169,33 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold text-platgold-300 mb-1">المحور الأفقي (X):</label>
+          <label className="block text-[10px] font-bold text-platgold-300 mb-1">محور X:</label>
           <select
             value={instance.xCol}
             onChange={(e) => onUpdateConfig(instance.instanceId, { xCol: e.target.value })}
-            className="w-full bg-emeraldos-950 text-white font-bold text-xs rounded-lg p-2 border border-platgold-500/30"
+            className="w-full bg-emeraldos-950 text-white font-bold text-xs rounded-lg p-2.5 border border-platgold-500/30"
           >
-            {dataset.columns
-              .filter((c) => c !== '#')
-              .map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
+            {featureCols.map((c) => (
+              <option key={c} value={c}>
+                {c} ({formatColumnKindLabel(colKinds[c])})
+              </option>
+            ))}
           </select>
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold text-platgold-300 mb-1">المحور الرأسي (Y):</label>
+          <label className="block text-[10px] font-bold text-platgold-300 mb-1">محور Y:</label>
           <select
-            value={instance.yCol}
+            value={!instance.yCol || instance.yCol === '__auto__' ? '' : instance.yCol}
             onChange={(e) => onUpdateConfig(instance.instanceId, { yCol: e.target.value })}
-            className="w-full bg-emeraldos-950 text-white font-bold text-xs rounded-lg p-2 border border-platgold-500/30"
+            className="w-full bg-emeraldos-950 text-white font-bold text-xs rounded-lg p-2.5 border border-platgold-500/30"
           >
-            {dataset.columns
-              .filter((c) => c !== '#')
-              .map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
+            <option value="">— غير مطلوب / تلقائي (Count)</option>
+            {featureCols.map((c) => (
+              <option key={c} value={c}>
+                {c} ({formatColumnKindLabel(colKinds[c])})
+              </option>
+            ))}
           </select>
         </div>
 
@@ -209,7 +204,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <select
             value={instance.aggMode}
             onChange={(e) => onUpdateConfig(instance.instanceId, { aggMode: e.target.value as AggMode })}
-            className="w-full bg-emeraldos-950 text-white font-bold text-xs rounded-lg p-2 border border-platgold-500/30"
+            className="w-full bg-emeraldos-950 text-white font-bold text-xs rounded-lg p-2.5 border border-platgold-500/30"
           >
             <option value="sum">المجموع</option>
             <option value="avg">المتوسط</option>
@@ -224,11 +219,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <select
             value={instance.chartType}
             onChange={(e) => handleChartTypeChange(e.target.value as ChartType)}
-            className="w-full bg-emeraldos-950 text-platgold-200 font-black text-xs rounded-lg p-2 border border-platgold-400/50"
+            className="w-full bg-emeraldos-950 text-platgold-200 font-black text-xs rounded-lg p-2.5 border border-platgold-400/50"
           >
             {CHART_TYPE_OPTIONS.map((ct) => (
               <option key={ct} value={ct}>
-                {CHART_TYPE_LABELS_AR[ct]}
+                {ct} — {CHART_TYPE_LABELS_AR[ct]}
               </option>
             ))}
           </select>
@@ -236,37 +231,37 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       </div>
 
       {/* 6 KPI Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2.5">
-        <div className="bg-gradient-to-br from-emeraldos-800 to-emeraldos-900 rounded-xl p-3 border border-emeraldos-500/40 shadow">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        <div className="bg-gradient-to-br from-emeraldos-800 to-emeraldos-900 rounded-xl p-3.5 border border-emeraldos-500/40 shadow">
           <p className="text-[10px] font-bold text-emeraldos-300">إجمالي المجموع (Sum)</p>
           <p className="text-lg font-black text-white mt-0.5 truncate tabular-nums">{formatNum(totalSum)}</p>
-          <span className="text-[9px] text-emeraldos-400">مجموع {instance.yCol}</span>
+          <span className="text-[9px] text-emeraldos-400">مجموع {yDisplayLabel}</span>
         </div>
-        <div className="bg-gradient-to-br from-teal-800 to-emeraldos-900 rounded-xl p-3 border border-teal-500/40 shadow">
+        <div className="bg-gradient-to-br from-teal-800 to-emeraldos-900 rounded-xl p-3.5 border border-teal-500/40 shadow">
           <p className="text-[10px] font-bold text-teal-200">المتوسط الحسابي (Mean)</p>
           <p className="text-lg font-black text-white mt-0.5 truncate tabular-nums">{formatNum(avgVal)}</p>
-          <span className="text-[9px] text-teal-300">متوسط {instance.yCol}</span>
+          <span className="text-[9px] text-teal-300">متوسط {yDisplayLabel}</span>
         </div>
-        <div className="bg-gradient-to-br from-amber-700 to-emeraldos-950 rounded-xl p-3 border border-platgold-500/40 shadow">
+        <div className="bg-gradient-to-br from-amber-700 to-emeraldos-950 rounded-xl p-3.5 border border-platgold-500/40 shadow">
           <p className="text-[10px] font-bold text-platgold-200">أعلى قيمة (Maximum)</p>
           <p className="text-lg font-black text-platgold-300 mt-0.5 truncate tabular-nums">{formatNum(maxVal)}</p>
           <span className="text-[9px] text-platgold-400 truncate block">
             {maxLabel ? `الأعلى: ${maxLabel}` : ''}
           </span>
         </div>
-        <div className="bg-gradient-to-br from-indigo-900 to-emeraldos-950 rounded-xl p-3 border border-indigo-500/40 shadow">
+        <div className="bg-gradient-to-br from-indigo-900 to-emeraldos-950 rounded-xl p-3.5 border border-indigo-500/40 shadow">
           <p className="text-[10px] font-bold text-indigo-200">أدنى قيمة (Minimum)</p>
           <p className="text-lg font-black text-white mt-0.5 truncate tabular-nums">{formatNum(minVal)}</p>
           <span className="text-[9px] text-indigo-300 truncate block">
             {minLabel ? `الأدنى: ${minLabel}` : ''}
           </span>
         </div>
-        <div className="bg-gradient-to-br from-sky-900 to-emeraldos-950 rounded-xl p-3 border border-sky-500/40 shadow">
+        <div className="bg-gradient-to-br from-sky-900 to-emeraldos-950 rounded-xl p-3.5 border border-sky-500/40 shadow">
           <p className="text-[10px] font-bold text-sky-200">عدد الصفوف (Records)</p>
           <p className="text-lg font-black text-white mt-0.5 tabular-nums">{formatNum(dataset.rowsCount, 0)}</p>
           <span className="text-[9px] text-sky-300">إجمالي السجلات</span>
         </div>
-        <div className="bg-gradient-to-br from-rose-900 to-emeraldos-950 rounded-xl p-3 border border-rose-500/40 shadow">
+        <div className="bg-gradient-to-br from-rose-900 to-emeraldos-950 rounded-xl p-3.5 border border-rose-500/40 shadow">
           <p className="text-[10px] font-bold text-rose-200">عدد الأعمدة (Features)</p>
           <p className="text-lg font-black text-white mt-0.5 tabular-nums">{dataset.colsCount}</p>
           <span className="text-[9px] text-rose-300">حقول الملف</span>
@@ -278,7 +273,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         <div className="xl:col-span-7 chart-surface-light p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="bg-emeraldos-950 text-platgold-300 text-xs font-black px-3 py-1 rounded-full border border-platgold-500/30 shadow">
-              {CHART_TYPE_LABELS_AR[instance.chartType]}: {instance.yCol} حسب {instance.xCol} ({AGG_MODE_LABELS_AR[instance.aggMode]})
+              {CHART_TYPE_LABELS_AR[instance.chartType]}: {yDisplayLabel} حسب {instance.xCol} ({AGG_MODE_LABELS_AR[instance.aggMode]})
             </span>
             <span className="text-[10px] text-slate-600 font-bold">{dataset.name}</span>
           </div>
@@ -289,7 +284,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             yCol={instance.yCol}
             chartType={instance.chartType}
             aggMode={instance.aggMode}
-            heightClass="h-72"
+            heightClass="h-80"
           />
         </div>
 
@@ -306,7 +301,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             yCol={instance.yCol}
             chartType="Pie"
             aggMode={instance.aggMode}
-            heightClass="h-72"
+            heightClass="h-80"
           />
         </div>
       </div>

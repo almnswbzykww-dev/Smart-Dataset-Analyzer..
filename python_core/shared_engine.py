@@ -244,12 +244,12 @@ def build_print_voucher_html(
     if c_name or c_loc or c_addr or logo_ok:
         company_html = f"""
         <div class="company-header">
-          <div>
+          {f'<img src="{html.escape(c_logo)}" alt="شعار الشركة" class="company-logo" />' if logo_ok else ''}
+          <div class="company-info">
             {f'<h1>{html.escape(c_name)}</h1>' if c_name else ''}
             {f'<p>📍 الموقع: {html.escape(c_loc)}</p>' if c_loc else ''}
             {f'<p>🏢 العنوان: {html.escape(c_addr)}</p>' if c_addr else ''}
           </div>
-          {f'<img src="{html.escape(c_logo)}" alt="شعار الشركة" class="company-logo" />' if logo_ok else ''}
         </div>"""
 
     pairs_html = ""
@@ -274,7 +274,9 @@ def build_print_voucher_html(
         table_html = f"""
         <section class="sec">
           <h3>📑 جدول البيانات التفصيلية</h3>
-          <table class="data"><thead><tr>{th}</tr></thead><tbody>{tr}</tbody></table>
+          <div style="width:100%;overflow-x:auto;">
+            <table class="data"><thead><tr>{th}</tr></thead><tbody>{tr}</tbody></table>
+          </div>
         </section>"""
 
     notes_html = f"<div class='notes'>📝 ملاحظات: {html.escape(notes)}</div>" if notes else ""
@@ -294,8 +296,11 @@ def build_print_voucher_html(
     .frame {{ max-width: 900px; margin: 0 auto; border: 2px solid #0f766e; border-radius: 12px; padding: 20px; }}
     .top {{ display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: #042f2e; color: #fff; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }}
     .badge {{ font-size: 16px; font-weight: bold; color: #efdb8a; }}
-    .company-header {{ display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f766e; padding-bottom: 12px; margin-bottom: 14px; }}
-    .company-logo {{ max-height: 70px; max-width: 150px; object-fit: contain; }}
+    .company-header {{ display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 8px; border-bottom: 2px solid #0f766e; padding-bottom: 14px; margin-bottom: 16px; }}
+    .company-info {{ text-align: center; }}
+    .company-header h1 {{ margin: 0; font-size: 20px; color: #0f172a; }}
+    .company-header p {{ margin: 4px 0 0; font-size: 12px; color: #334155; font-weight: bold; }}
+    .company-logo {{ display: block; margin: 0 auto; max-height: 92px; max-width: 220px; object-fit: contain; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px; background: #fff; }}
     .sec {{ margin-bottom: 16px; }}
     .sec h3 {{ margin: 0 0 8px; font-size: 14px; color: #064e3b; }}
     table {{ width: 100%; border-collapse: collapse; font-size: 12px; }}

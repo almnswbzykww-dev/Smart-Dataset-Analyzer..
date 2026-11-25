@@ -11,9 +11,9 @@ export const OfflineHomeBackdrop: React.FC = () => {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.28),transparent_52%),radial-gradient(ellipse_at_bottom_left,rgba(6,182,212,0.24),transparent_52%),radial-gradient(ellipse_at_top_left,rgba(226,201,116,0.20),transparent_48%),radial-gradient(circle_at_50%_50%,rgba(6,54,48,0.85),#010a0d_88%)]" />
 
       {/* Animated Multi-Color Center Orbs (Red, Pink, Blue, Emerald) */}
-      <div className="cinema-orb-1 absolute -top-24 right-1/4 w-[460px] h-[460px] rounded-full bg-rose-500/20 blur-[110px]" />
-      <div className="cinema-orb-2 absolute -bottom-24 left-1/4 w-[500px] h-[500px] rounded-full bg-blue-500/22 blur-[120px]" />
-      <div className="cinema-orb-1 absolute top-1/3 left-1/3 w-[380px] h-[380px] rounded-full bg-pink-500/18 blur-[105px]" />
+      <div className="cinema-orb-1 absolute -top-28 right-1/5 w-[560px] h-[560px] rounded-full bg-rose-500/24 blur-[120px]" />
+      <div className="cinema-orb-2 absolute -bottom-28 left-1/5 w-[620px] h-[620px] rounded-full bg-blue-500/26 blur-[130px]" />
+      <div className="cinema-orb-1 absolute top-1/4 left-1/3 w-[480px] h-[480px] rounded-full bg-pink-500/22 blur-[115px]" />
 
       {/* Pure Local SVG Grid, Spectrum Lines, Flowing Waves & Orbital Rings */}
       <svg
@@ -103,50 +103,50 @@ export const OfflineHomeBackdrop: React.FC = () => {
           <circle
             cx="720"
             cy="450"
-            r="178"
+            r="205"
             fill="none"
             stroke="url(#offSpectrumRedPinkBlue)"
-            strokeWidth="1.8"
-            strokeDasharray="12 8"
-            opacity="0.85"
+            strokeWidth="2.2"
+            strokeDasharray="14 9"
+            opacity="0.9"
           />
-          <circle cx="720" cy="272" r="4" fill="#ef4444" opacity="0.95" />
-          <circle cx="898" cy="450" r="4" fill="#ec4899" opacity="0.95" />
-          <circle cx="542" cy="450" r="4" fill="#3b82f6" opacity="0.95" />
+          <circle cx="720" cy="245" r="5" fill="#ef4444" opacity="0.95" />
+          <circle cx="925" cy="450" r="5" fill="#ec4899" opacity="0.95" />
+          <circle cx="515" cy="450" r="5" fill="#3b82f6" opacity="0.95" />
         </g>
 
         <g className="cinema-ring-cw" style={{ transformOrigin: '720px 450px' }}>
           <circle
             cx="720"
             cy="450"
-            r="245"
+            r="285"
             fill="none"
             stroke="url(#offSpectrumAll)"
-            strokeWidth="2"
-            strokeDasharray="18 10"
-            opacity="0.9"
+            strokeWidth="2.4"
+            strokeDasharray="20 10"
+            opacity="0.92"
           />
-          <circle cx="720" cy="205" r="4.5" fill="#ec4899" opacity="0.95" />
-          <circle cx="720" cy="695" r="4.5" fill="#3b82f6" opacity="0.95" />
-          <circle cx="965" cy="450" r="4" fill="#ef4444" opacity="0.95" />
-          <circle cx="475" cy="450" r="4" fill="#06b6d4" opacity="0.9" />
+          <circle cx="720" cy="165" r="5.5" fill="#ec4899" opacity="0.95" />
+          <circle cx="720" cy="735" r="5.5" fill="#3b82f6" opacity="0.95" />
+          <circle cx="1005" cy="450" r="5" fill="#ef4444" opacity="0.95" />
+          <circle cx="435" cy="450" r="5" fill="#06b6d4" opacity="0.95" />
         </g>
 
         <g className="cinema-ring-ccw" style={{ transformOrigin: '720px 450px' }}>
           <circle
             cx="720"
             cy="450"
-            r="320"
+            r="365"
             fill="none"
             stroke="url(#offWavePinkBlueRed)"
-            strokeOpacity="0.65"
-            strokeWidth="1.5"
-            strokeDasharray="6 12"
+            strokeOpacity="0.72"
+            strokeWidth="1.8"
+            strokeDasharray="8 12"
           />
-          <circle cx="400" cy="450" r="4" fill="#ef4444" opacity="0.9" />
-          <circle cx="1040" cy="450" r="4" fill="#3b82f6" opacity="0.9" />
-          <circle cx="720" cy="130" r="4" fill="#f59e0b" opacity="0.9" />
-          <circle cx="720" cy="770" r="4" fill="#ec4899" opacity="0.9" />
+          <circle cx="355" cy="450" r="4.8" fill="#ef4444" opacity="0.95" />
+          <circle cx="1085" cy="450" r="4.8" fill="#3b82f6" opacity="0.95" />
+          <circle cx="720" cy="85" r="4.8" fill="#f59e0b" opacity="0.95" />
+          <circle cx="720" cy="815" r="4.8" fill="#ec4899" opacity="0.95" />
         </g>
 
         <path
@@ -163,11 +163,11 @@ export const OfflineHomeBackdrop: React.FC = () => {
       </svg>
 
       {/* Ambient Floating Mini Chart Holograms */}
-      <div className="cinema-card-a hidden md:block absolute top-10 right-10 w-52 rounded-2xl bg-emeraldos-950/65 border border-emerald-400/25 backdrop-blur-md p-3.5 shadow-[0_0_30px_rgba(16,185,129,0.18)]">
+      <div className="cinema-card-a hidden md:block absolute top-8 right-8 w-60 rounded-2xl bg-emeraldos-950/70 border border-emerald-400/30 backdrop-blur-md p-4 shadow-[0_0_38px_rgba(16,185,129,0.22)]">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-bold text-emerald-300">توزيع البيانات</span>
+          <span className="text-[11px] font-bold text-emerald-300">توزيع البيانات</span>
         </div>
-        <svg viewBox="0 0 160 72" className="w-full h-16">
+        <svg viewBox="0 0 160 72" className="w-full h-20">
           <line x1="0" y1="68" x2="160" y2="68" stroke="#334155" strokeWidth="1" />
           <rect className="bar-anim-1" x="10" y="24" width="16" height="44" rx="4" fill="#10b981" />
           <rect className="bar-anim-2" x="36" y="10" width="16" height="58" rx="4" fill="#06b6d4" />
@@ -178,18 +178,18 @@ export const OfflineHomeBackdrop: React.FC = () => {
         </svg>
       </div>
 
-      <div className="cinema-card-b hidden md:block absolute top-12 left-10 w-48 rounded-2xl bg-emeraldos-950/65 border border-platgold-400/25 backdrop-blur-md p-3.5 shadow-[0_0_30px_rgba(197,160,89,0.16)]">
+      <div className="cinema-card-b hidden md:block absolute top-10 left-8 w-56 rounded-2xl bg-emeraldos-950/70 border border-platgold-400/30 backdrop-blur-md p-4 shadow-[0_0_38px_rgba(197,160,89,0.20)]">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-bold text-platgold-300">المؤشر النسبي</span>
+          <span className="text-[11px] font-bold text-platgold-300">المؤشر النسبي</span>
         </div>
         <div className="flex items-center gap-3">
-          <svg viewBox="0 0 64 64" className="w-14 h-14 cinema-ring-cw">
+          <svg viewBox="0 0 64 64" className="w-16 h-16 cinema-ring-cw">
             <circle cx="32" cy="32" r="22" fill="none" stroke="#063626" strokeWidth="8" />
             <circle cx="32" cy="32" r="22" fill="none" stroke="#10b981" strokeWidth="8" strokeDasharray="55 140" />
             <circle cx="32" cy="32" r="22" fill="none" stroke="#e2c974" strokeWidth="8" strokeDasharray="40 140" strokeDashoffset="-58" />
             <circle cx="32" cy="32" r="22" fill="none" stroke="#06b6d4" strokeWidth="8" strokeDasharray="32 140" strokeDashoffset="-100" />
           </svg>
-          <div className="space-y-1 text-[9px] font-bold text-slate-300">
+          <div className="space-y-1 text-[10px] font-bold text-slate-300">
             <p className="text-emerald-300">نمو</p>
             <p className="text-platgold-200">كفاءة</p>
             <p className="text-cyan-300">دقة</p>
@@ -197,11 +197,11 @@ export const OfflineHomeBackdrop: React.FC = () => {
         </div>
       </div>
 
-      <div className="cinema-card-b hidden md:block absolute bottom-10 right-12 w-56 rounded-2xl bg-emeraldos-950/65 border border-cyan-400/25 backdrop-blur-md p-3.5 shadow-[0_0_30px_rgba(6,182,212,0.16)]">
+      <div className="cinema-card-b hidden md:block absolute bottom-8 right-10 w-64 rounded-2xl bg-emeraldos-950/70 border border-cyan-400/30 backdrop-blur-md p-4 shadow-[0_0_38px_rgba(6,182,212,0.20)]">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-bold text-cyan-300">مسار السلاسل الزمنية</span>
+          <span className="text-[11px] font-bold text-cyan-300">مسار السلاسل الزمنية</span>
         </div>
-        <svg viewBox="0 0 180 60" className="w-full h-14">
+        <svg viewBox="0 0 180 60" className="w-full h-16">
           <path d="M 5 48 L 35 34 L 68 42 L 102 18 L 138 26 L 175 8 L 175 58 L 5 58 Z" fill="rgba(6,182,212,0.16)" />
           <path
             className="line-anim"
@@ -217,7 +217,7 @@ export const OfflineHomeBackdrop: React.FC = () => {
         </svg>
       </div>
 
-      <div className="cinema-card-a hidden md:block absolute bottom-10 left-12 w-52 rounded-2xl bg-emeraldos-950/65 border border-emerald-400/25 backdrop-blur-md p-3.5 shadow-[0_0_30px_rgba(16,185,129,0.16)]">
+      <div className="cinema-card-a hidden md:block absolute bottom-8 left-10 w-60 rounded-2xl bg-emeraldos-950/70 border border-emerald-400/30 backdrop-blur-md p-4 shadow-[0_0_38px_rgba(16,185,129,0.20)]">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[10px] font-bold text-emerald-300">مصفوفة الارتباط</span>
         </div>

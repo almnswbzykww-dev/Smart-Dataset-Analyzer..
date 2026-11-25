@@ -125,6 +125,10 @@ export function formatBytesAr(bytes?: number): string {
   return `${mb.toFixed(2)} MB`;
 }
 
+export function sanitizeFiniteNumber(val: number, fallback = 0): number {
+  return Number.isFinite(val) ? val : fallback;
+}
+
 export function formatSmartNum(val: number, maxDecimals = 2): string {
   if (!Number.isFinite(val)) return '0';
   return Number(val.toFixed(maxDecimals)).toLocaleString('en-US');
@@ -524,27 +528,47 @@ export function computeSmartColumnStats(ds: SmartDatasetLike, col: string): Smar
   if (!vals.length) return null;
 
   vals.sort((a, b) => a - b);
-  const mean = sum / vals.length;
+  const safeSum = Number.isFinite(sum) ? sum : 0;
+  const mean = Number.isFinite(safeSum / vals.length) ? safeSum / vals.length : 0;
   let sqDiffSum = 0;
   for (let i = 0; i < vals.length; i++) {
     const d = vals[i] - mean;
-    sqDiffSum += d * d;
+    const sq = d * d;
+    if (Number.isFinite(sq)) {
+      sqDiffSum += sq;
+    }
   }
-  const variance = sqDiffSum / vals.length;
+  const variance = Number.isFinite(sqDiffSum / vals.length) ? sqDiffSum / vals.length : 0;
+  const stdDev = Number.isFinite(Math.sqrt(variance)) ? Math.sqrt(variance) : 0;
 
   return {
     column: col,
     count: vals.length,
     missingCount,
-    sum,
+    sum: safeSum,
     mean,
-    median: quantileSorted(vals, 0.5),
-    stdDev: Math.sqrt(variance),
-    min: minVal,
-    max: maxVal,
-    q1: quantileSorted(vals, 0.25),
-    q3: quantileSorted(vals, 0.75),
+    median: sanitizeFiniteNumber(quantileSorted(vals, 0.5)),
+    stdDev,
+    min: sanitizeFiniteNumber(minVal),
+    max: sanitizeFiniteNumber(maxVal),
+    q1: sanitizeFiniteNumber(quantileSorted(vals, 0.25)),
+    q3: sanitizeFiniteNumber(quantileSorted(vals, 0.75)),
   };
+}
+
+export function detectSmartColumnKind(ds: SmartDatasetLike, col: string): SmartColumnKind {
+  if (ds.columnTypes && ds.columnTypes[col]) {
+    return ds.columnTypes[col];
+  }
+  if (isSmartNumericColumn(ds.rows, col, ds.columnTypes)) return 'numeric';
+  if (isSmartDateColumn(ds.rows, col, ds.columnTypes)) return 'date';
+  return 'text';
+}
+
+export function formatColumnKindLabel(kind: SmartColumnKind): string {
+  if (kind === 'numeric') return 'Numeric · رقمي';
+  if (kind === 'date') return 'Date · تاريخ';
+  return 'Text · نصي';
 }
 
 export function aggregateSmartDataset(
@@ -553,6 +577,9 @@ export function aggregateSmartDataset(
   yCol: string,
   mode: SmartAggMode = 'sum'
 ): { labels: string[]; values: number[] } {
+  const effectiveY = !yCol || yCol === '__auto__' || yCol === 'NONE' ? '' : yCol;
+  const effectiveMode: SmartAggMode = !effectiveY ? 'count' : mode;
+
   const sums = new Map<string, number>();
   const counts = new Map<string, number>();
   const maxs = new Map<string, number>();
@@ -564,7 +591,7 @@ export function aggregateSmartDataset(
     const rawKey = r?.[xCol];
     const key = isMissingCellValue(rawKey) ? 'غير محدد' : String(rawKey).trim() || 'غير محدد';
 
-    const parsed = tryParseSmartNumeric(r?.[yCol]);
+    const parsed = effectiveY ? tryParseSmartNumeric(r?.[effectiveY]) : null;
     const prevCount = counts.get(key) || 0;
     counts.set(key, prevCount + 1);
 
@@ -580,14 +607,19 @@ export function aggregateSmartDataset(
   }
 
   const labels = Array.from(counts.keys());
+  if (!labels.length) {
+    return { labels: ['لا توجد بيانات'], values: [0] };
+  }
   const values = labels.map((k) => {
     const cnt = counts.get(k) || 1;
-    const sum = sums.get(k) || 0;
-    if (mode === 'sum') return Number(sum.toFixed(2));
-    if (mode === 'count') return cnt;
-    if (mode === 'max') return Number((maxs.get(k) ?? 0).toFixed(2));
-    if (mode === 'min') return Number((mins.get(k) ?? 0).toFixed(2));
-    return Number((sum / cnt).toFixed(2));
+    const sum = sanitizeFiniteNumber(sums.get(k) || 0);
+    let raw = 0;
+    if (effectiveMode === 'sum') raw = sum;
+    else if (effectiveMode === 'count') raw = cnt;
+    else if (effectiveMode === 'max') raw = maxs.get(k) ?? 0;
+    else if (effectiveMode === 'min') raw = mins.get(k) ?? 0;
+    else raw = sum / cnt;
+    return Number(sanitizeFiniteNumber(raw).toFixed(2));
   });
 
   return { labels, values };
@@ -613,10 +645,10 @@ export function computeSmartHistogramBins(
     }
   }
 
-  if (!vals.length) return null;
-  const mean = sum / vals.length;
+  if (!vals.length || !Number.isFinite(minVal) || !Number.isFinite(maxVal)) return null;
+  const mean = sanitizeFiniteNumber(sum / vals.length);
 
-  if (minVal === maxVal) {
+  if (minVal === maxVal || !Number.isFinite(maxVal - minVal) || maxVal - minVal === 0) {
     return {
       labels: [formatSmartNum(minVal)],
       counts: [vals.length],
@@ -626,6 +658,13 @@ export function computeSmartHistogramBins(
 
   const binCount = Math.min(14, Math.max(5, Math.round(Math.log2(vals.length) + 1)));
   const width = (maxVal - minVal) / binCount;
+  if (!Number.isFinite(width) || width <= 0) {
+    return {
+      labels: [formatSmartNum(minVal)],
+      counts: [vals.length],
+      mean,
+    };
+  }
   const counts = new Array<number>(binCount).fill(0);
   const labels: string[] = [];
 
@@ -637,8 +676,8 @@ export function computeSmartHistogramBins(
 
   for (let i = 0; i < vals.length; i++) {
     let idx = Math.floor((vals[i] - minVal) / width);
+    if (!Number.isFinite(idx) || idx < 0) idx = 0;
     if (idx >= binCount) idx = binCount - 1;
-    if (idx < 0) idx = 0;
     counts[idx]++;
   }
 
@@ -668,14 +707,19 @@ export function computeSmartBoxPlotGroups(
     }
     if (!vals.length) return [];
     vals.sort((a, b) => a - b);
+    const min = sanitizeFiniteNumber(vals[0]);
+    const max = sanitizeFiniteNumber(vals[vals.length - 1]);
+    const q1 = sanitizeFiniteNumber(quantileSorted(vals, 0.25), min);
+    const median = sanitizeFiniteNumber(quantileSorted(vals, 0.5), q1);
+    const q3 = sanitizeFiniteNumber(quantileSorted(vals, 0.75), max);
     return [
       {
         label: yCol,
-        min: vals[0],
-        q1: quantileSorted(vals, 0.25),
-        median: quantileSorted(vals, 0.5),
-        q3: quantileSorted(vals, 0.75),
-        max: vals[vals.length - 1],
+        min,
+        q1,
+        median,
+        q3,
+        max,
         count: vals.length,
       },
     ];
@@ -699,13 +743,18 @@ export function computeSmartBoxPlotGroups(
   const entries = Array.from(grouped.entries()).sort((a, b) => b[1].length - a[1].length).slice(0, 12);
   return entries.map(([label, arr]) => {
     arr.sort((a, b) => a - b);
+    const min = sanitizeFiniteNumber(arr[0]);
+    const max = sanitizeFiniteNumber(arr[arr.length - 1]);
+    const q1 = sanitizeFiniteNumber(quantileSorted(arr, 0.25), min);
+    const median = sanitizeFiniteNumber(quantileSorted(arr, 0.5), q1);
+    const q3 = sanitizeFiniteNumber(quantileSorted(arr, 0.75), max);
     return {
       label,
-      min: arr[0],
-      q1: quantileSorted(arr, 0.25),
-      median: quantileSorted(arr, 0.5),
-      q3: quantileSorted(arr, 0.75),
-      max: arr[arr.length - 1],
+      min,
+      q1,
+      median,
+      q3,
+      max,
       count: arr.length,
     };
   });
@@ -754,10 +803,11 @@ export function prepareSmartChartData(
 ): SmartChartPrepared {
   const featureCols = ds.columns.filter((c) => c !== '#');
   const safeX = featureCols.includes(xCol) ? xCol : ds.defaultX || featureCols[0] || '#';
-  const safeY = featureCols.includes(yCol) ? yCol : ds.defaultY || featureCols[0] || '#';
+  const yIsExplicitlyOmitted = !yCol || yCol === '__auto__' || yCol === 'NONE';
+  const safeY = !yIsExplicitlyOmitted && featureCols.includes(yCol) ? yCol : yIsExplicitlyOmitted ? '' : ds.defaultY || featureCols[0] || '#';
 
   const xIsNum = isSmartNumericColumn(ds.rows, safeX, ds.columnTypes);
-  const yIsNum = isSmartNumericColumn(ds.rows, safeY, ds.columnTypes);
+  const yIsNum = safeY ? isSmartNumericColumn(ds.rows, safeY, ds.columnTypes) : false;
   const xIsDate = isSmartDateColumn(ds.rows, safeX, ds.columnTypes);
 
   const numericCandidates = featureCols.filter((c) => isSmartNumericColumn(ds.rows, c, ds.columnTypes));
@@ -766,27 +816,35 @@ export function prepareSmartChartData(
   if (chartType === 'Bar' || chartType === 'Pie') {
     const notices: string[] = [];
     let effectiveAgg = aggMode;
-    let effectiveY = safeY;
+    let effectiveY = safeY || 'عدد السجلات';
 
-    if (!yIsNum && effectiveAgg !== 'count') {
+    if (yIsExplicitlyOmitted || !safeY) {
+      effectiveAgg = 'count';
+      effectiveY = 'عدد السجلات';
+      notices.push(`تم احتساب تكرار السجلات تلقائياً لعمود "${safeX}" بدون إجبار اختيار محور Y.`);
+    } else if (!yIsNum && effectiveAgg !== 'count') {
       effectiveAgg = 'count';
       notices.push(`تم التحويل التلقائي إلى «العدد» لأن العمود "${safeY}" نصي أو غير رقمي.`);
     }
 
-    const agg = aggregateSmartDataset(ds, safeX, effectiveY, effectiveAgg);
+    const agg = aggregateSmartDataset(ds, safeX, safeY || safeX, effectiveAgg);
     let labels = agg.labels;
-    let values = agg.values;
+    let values = agg.values.map((v) => sanitizeFiniteNumber(v));
 
     // For Pie: ensure strictly non-negative positive values
     if (chartType === 'Pie') {
       const hasNegative = values.some((v) => v < 0);
       const positiveSum = values.reduce((a, b) => a + (b > 0 ? b : 0), 0);
       if (hasNegative || positiveSum <= 0) {
-        const countFallback = aggregateSmartDataset(ds, safeX, effectiveY, 'count');
+        const countFallback = aggregateSmartDataset(ds, safeX, safeY || safeX, 'count');
         labels = countFallback.labels;
-        values = countFallback.values;
+        values = countFallback.values.map((v) => sanitizeFiniteNumber(v));
         effectiveAgg = 'count';
         notices.push('تم عرض التوزيع النسبي بالتكرار (العدد) لتجنب القيم السالبة أو الصفرية في المخطط الدائري.');
+      }
+      if (values.reduce((a, b) => a + (b > 0 ? b : 0), 0) <= 0) {
+        labels = ['لا توجد بيانات رقمية موجبة'];
+        values = [1];
       }
     }
 
@@ -800,8 +858,8 @@ export function prepareSmartChartData(
 
     return {
       kind: chartType,
-      labels: capped.labels,
-      values: capped.values,
+      labels: capped.labels.length ? capped.labels : ['لا توجد بيانات'],
+      values: capped.values.length ? capped.values.map((v) => sanitizeFiniteNumber(v)) : [0],
       effectiveX: safeX,
       effectiveY,
       effectiveAgg,
@@ -814,7 +872,11 @@ export function prepareSmartChartData(
   if (chartType === 'Line') {
     const notices: string[] = [];
     let effectiveAgg = aggMode;
-    if (!yIsNum && effectiveAgg !== 'count') {
+    const effectiveY = safeY || 'عدد السجلات';
+    if (yIsExplicitlyOmitted || !safeY) {
+      effectiveAgg = 'count';
+      notices.push(`تم احتساب التوزيع العددي تلقائياً عبر "${safeX}" بدون إلزام اختيار محور Y.`);
+    } else if (!yIsNum && effectiveAgg !== 'count') {
       effectiveAgg = 'count';
       notices.push(`تم التحويل التلقائي إلى «العدد» لأن المحور Y "${safeY}" غير رقمي.`);
     }
@@ -826,7 +888,7 @@ export function prepareSmartChartData(
         const r = ds.rows[i];
         const parsedDate = tryParseSmartDate(r?.[safeX]);
         if (!parsedDate) continue;
-        const val = tryParseSmartNumeric(r?.[safeY]);
+        const val = safeY ? tryParseSmartNumeric(r?.[safeY]) : 1;
         const bucket = dayBuckets.get(parsedDate.iso);
         if (bucket) {
           bucket.count++;
@@ -893,7 +955,7 @@ export function prepareSmartChartData(
             labels: years,
             values: vals,
             effectiveX: safeX,
-            effectiveY: safeY,
+            effectiveY,
             effectiveAgg,
             totalGroups: years.length,
             adaptationNotice: notices.join(' • '),
@@ -914,7 +976,7 @@ export function prepareSmartChartData(
           labels: sortedMonths,
           values: vals,
           effectiveX: safeX,
-          effectiveY: safeY,
+          effectiveY,
           effectiveAgg,
           totalGroups: sortedMonths.length,
           adaptationNotice: notices.join(' • '),
@@ -922,32 +984,37 @@ export function prepareSmartChartData(
       }
 
       const sortedDays = Array.from(dayBuckets.entries()).sort((a, b) => a[1].ts - b[1].ts);
-      const vals = sortedDays.map(([, b]) => {
-        if (effectiveAgg === 'sum') return Number(b.sum.toFixed(2));
-        if (effectiveAgg === 'count') return b.count;
-        if (effectiveAgg === 'max') return Number(b.max.toFixed(2));
-        if (effectiveAgg === 'min') return Number(b.min.toFixed(2));
-        return Number((b.sum / b.count).toFixed(2));
-      });
-      return {
-        kind: 'Line',
-        labels: sortedDays.map(([d]) => d),
-        values: vals,
-        effectiveX: safeX,
-        effectiveY: safeY,
-        effectiveAgg,
-        totalGroups: sortedDays.length,
-        adaptationNotice: notices.length ? notices.join(' • ') : undefined,
-      };
+      if (sortedDays.length > 0) {
+        const vals = sortedDays.map(([, b]) => {
+          let raw = 0;
+          if (effectiveAgg === 'sum') raw = b.sum;
+          else if (effectiveAgg === 'count') raw = b.count;
+          else if (effectiveAgg === 'max') raw = b.max;
+          else if (effectiveAgg === 'min') raw = b.min;
+          else raw = b.sum / Math.max(1, b.count);
+          return Number(sanitizeFiniteNumber(raw).toFixed(2));
+        });
+        return {
+          kind: 'Line',
+          labels: sortedDays.map(([d]) => d),
+          values: vals,
+          effectiveX: safeX,
+          effectiveY,
+          effectiveAgg,
+          totalGroups: sortedDays.length,
+          adaptationNotice: notices.length ? notices.join(' • ') : undefined,
+        };
+      }
+      notices.push(`تعذر استخلاص تواريخ صالحة من "${safeX}"؛ تم التجميع التلقائي بالقيم المتاحة.`);
     }
 
-    const agg = aggregateSmartDataset(ds, safeX, safeY, effectiveAgg);
+    const agg = aggregateSmartDataset(ds, safeX, safeY || safeX, effectiveAgg);
     let labels = agg.labels;
-    let values = agg.values;
+    let values = agg.values.map((v) => sanitizeFiniteNumber(v));
 
     if (xIsNum) {
       const paired = labels
-        .map((lbl, idx) => ({ lbl, num: tryParseSmartNumeric(lbl), val: values[idx] }))
+        .map((lbl, idx) => ({ lbl, num: tryParseSmartNumeric(lbl), val: sanitizeFiniteNumber(values[idx]) }))
         .filter((p) => p.num !== null)
         .sort((a, b) => (a.num as number) - (b.num as number));
 
@@ -961,12 +1028,12 @@ export function prepareSmartChartData(
           const slice = paired.slice(i, i + step);
           outL.push(slice[0].lbl);
           const avg = slice.reduce((acc, s) => acc + s.val, 0) / slice.length;
-          outV.push(Number(avg.toFixed(2)));
+          outV.push(Number(sanitizeFiniteNumber(avg).toFixed(2)));
         }
         notices.push(`تم ضغط ${formatSmartNum(paired.length, 0)} نقطة رقمية إلى ${outL.length} فترة مرتبة لسهولة القراءة.`);
         labels = outL;
         values = outV;
-      } else {
+      } else if (paired.length > 0) {
         labels = paired.map((p) => p.lbl);
         values = paired.map((p) => p.val);
       }
@@ -979,10 +1046,10 @@ export function prepareSmartChartData(
 
     return {
       kind: 'Line',
-      labels,
-      values,
+      labels: labels.length ? labels : ['لا توجد بيانات'],
+      values: values.length ? values.map((v) => sanitizeFiniteNumber(v)) : [0],
       effectiveX: safeX,
-      effectiveY: safeY,
+      effectiveY,
       effectiveAgg,
       totalGroups: agg.labels.length,
       adaptationNotice: notices.length ? notices.join(' • ') : undefined,
@@ -997,6 +1064,17 @@ export function prepareSmartChartData(
     let effXIsNum = xIsNum;
     let effYIsNum = yIsNum;
 
+    if (yIsExplicitlyOmitted || !effY) {
+      if (effXIsNum && numericCandidates.length >= 2) {
+        effY = numericCandidates.find((c) => c !== effX) || numericCandidates[0];
+        effYIsNum = true;
+        notices.push(`تم ربط العمود الرقمي "${effY}" كمحور Y تلقائياً مع "${effX}" لعرض التشتت.`);
+      } else if (effXIsNum) {
+        effY = effX;
+        effYIsNum = true;
+      }
+    }
+
     if (!effXIsNum && !effYIsNum) {
       if (numericCandidates.length >= 2) {
         effX = numericCandidates[0];
@@ -1010,7 +1088,7 @@ export function prepareSmartChartData(
         notices.push(`تم ربط العمود الرقمي "${effY}" تلقائياً مقابل ترتيب فئات "${effX}".`);
       } else {
         // Text-only dataset fallback: plot top category frequencies as scatter points!
-        const freq = aggregateSmartDataset(ds, safeX, safeY, 'count');
+        const freq = aggregateSmartDataset(ds, safeX, safeX, 'count');
         const topPairs = freq.labels
           .map((l, i) => ({ label: l, val: freq.values[i] }))
           .sort((a, b) => b.val - a.val)
@@ -1043,7 +1121,7 @@ export function prepareSmartChartData(
 
     for (let i = 0; i < totalRows; i++) {
       const r = ds.rows[i];
-      const parsedY = tryParseSmartNumeric(r?.[effY]);
+      const parsedY = effY ? tryParseSmartNumeric(r?.[effY]) : null;
       const parsedX = tryParseSmartNumeric(r?.[effX]);
 
       if (useNumericPair) {
@@ -1070,10 +1148,33 @@ export function prepareSmartChartData(
           points.push({
             x: i + 1,
             y: parsedX,
-            rawLabel: String(r?.[effY] ?? `#${i + 1}`),
+            rawLabel: String(effY ? r?.[effY] ?? `#${i + 1}` : `#${i + 1}`),
           });
         }
       }
+    }
+
+    if (points.length === 0) {
+      // Fallback gracefully when chosen numeric columns contain only missing/dirty cells
+      const freq = aggregateSmartDataset(ds, safeX, safeX, 'count');
+      const topPairs = freq.labels
+        .map((l, i) => ({ label: l, val: sanitizeFiniteNumber(freq.values[i]) }))
+        .sort((a, b) => b.val - a.val)
+        .slice(0, 40);
+      const pts: SmartScatterPoint[] = topPairs.length
+        ? topPairs.map((p, idx) => ({ x: idx + 1, y: p.val, rawLabel: p.label }))
+        : [{ x: 1, y: 0, rawLabel: 'لا توجد نقاط رقمية صالحة' }];
+      notices.push('تعذر إيجاد نقاط رقمية مقترنة في المحورين المحددين؛ تم عرض توزيع التكرارات التلقائي بدون أخطاء.');
+      return {
+        kind: 'Scatter',
+        points: pts,
+        xTitle: `توزيع (${safeX})`,
+        yTitle: 'عدد السجلات',
+        useNumericX: false,
+        xTickLabels: topPairs.map((p) => p.label),
+        totalMatchedPoints: pts.length,
+        adaptationNotice: notices.join(' • '),
+      };
     }
 
     if (stride > 1) {
@@ -1082,7 +1183,7 @@ export function prepareSmartChartData(
       );
     }
 
-    const yTitle = !useNumericPair && !effYIsNum && effXIsNum ? effX : effY;
+    const yTitle = !useNumericPair && !effYIsNum && effXIsNum ? effX : effY || 'القيمة';
     const xTitle = useNumericPair ? effX : `تتابع السجلات (${effX})`;
 
     return {
@@ -1096,11 +1197,38 @@ export function prepareSmartChartData(
     };
   }
 
-  // ==================== 4. HISTOGRAM ====================
+  // ==================== 4. HISTOGRAM (Single-Axis Friendly: Y Optional) ====================
   if (chartType === 'Histogram') {
-    let targetCol = yIsNum ? safeY : xIsNum ? safeX : numericCandidates[0] || '';
     const notices: string[] = [];
+    // If Y is explicitly omitted, prioritize X directly (even categorical X frequency if X is text)
+    if (yIsExplicitlyOmitted) {
+      if (xIsNum) {
+        const hist = computeSmartHistogramBins(ds, safeX);
+        if (hist) {
+          return {
+            kind: 'Histogram',
+            labels: hist.labels,
+            counts: hist.counts,
+            mean: hist.mean,
+            targetCol: safeX,
+            adaptationNotice: `تم رسم المدرج التكراري لعمود المحور X الرقمي "${safeX}" مباشرة بدون الحاجة لاختيار محور Y.`,
+          };
+        }
+      }
+      const freq = aggregateSmartDataset(ds, safeX, safeX, 'count');
+      const capped = capTopCategories(freq.labels, freq.values, 15, 'count');
+      return {
+        kind: 'Histogram',
+        labels: capped.labels,
+        counts: capped.values,
+        mean: capped.values.length ? capped.values.reduce((a, b) => a + b, 0) / capped.values.length : 0,
+        targetCol: safeX,
+        isCategoricalFrequency: true,
+        adaptationNotice: `تم رسم التوزيع التكراري لقيم العمود "${safeX}" مباشرة بدون الحاجة لمحور Y.`,
+      };
+    }
 
+    const targetCol = yIsNum ? safeY : xIsNum ? safeX : numericCandidates[0] || '';
     if (targetCol && targetCol !== safeY && !yIsNum) {
       notices.push(`تم اختيار العمود الرقمي "${targetCol}" تلقائياً لرسم المدرج التكراري.`);
     }
@@ -1134,9 +1262,19 @@ export function prepareSmartChartData(
   }
 
   // ==================== 5. BOX PLOT ====================
-  let boxY = yIsNum ? safeY : xIsNum ? safeX : numericCandidates[0] || '';
+  const boxY = yIsExplicitlyOmitted
+    ? xIsNum
+      ? safeX
+      : numericCandidates[0] || ''
+    : yIsNum
+      ? safeY
+      : xIsNum
+        ? safeX
+        : numericCandidates[0] || '';
   const notices: string[] = [];
-  if (boxY && boxY !== safeY && !yIsNum) {
+  if (yIsExplicitlyOmitted && boxY) {
+    notices.push(`تم استخدام العمود الرقمي "${boxY}" تلقائياً لحساب الربيعيات والصندوق بدون إجبار اختيار Y.`);
+  } else if (boxY && boxY !== safeY && !yIsNum) {
     notices.push(`تم اختيار العمود الرقمي "${boxY}" تلقائياً لحساب الربيعيات والصندوق.`);
   }
 
@@ -1153,7 +1291,7 @@ export function prepareSmartChartData(
     }
   }
 
-  // Fallback for pure text/PDF datasets without numeric columns: compute distribution of text lengths by category or overall
+  // Fallback for pure text/PDF datasets without numeric columns: compute distribution of text lengths
   const lengths = ds.rows.map((r) => String(r?.[safeX] ?? '').length).sort((a, b) => a - b);
   const safeLengths = lengths.length ? lengths : [0];
   return {

@@ -601,8 +601,8 @@ export default function OfflineApp() {
     windowMode === 'maximized'
       ? 'm-0 rounded-none'
       : windowMode === 'compact'
-        ? 'my-4 sm:my-7 mx-auto w-[94%] max-w-5xl rounded-2xl shadow-2xl'
-        : 'm-2 sm:m-3 rounded-2xl';
+        ? 'my-3 sm:my-5 mx-auto w-[96%] max-w-6xl rounded-2xl shadow-2xl'
+        : 'm-1 sm:m-1.5 rounded-2xl';
 
   return (
     <div className="h-screen w-screen emerald-wallpaper relative flex flex-col overflow-hidden" dir="rtl">
@@ -785,7 +785,7 @@ export default function OfflineApp() {
           )}
 
           {/* Main Workspace */}
-          <main id="offlineMainWorkspace" className="flex-1 flex flex-col overflow-hidden relative">
+          <main id="offlineMainWorkspace" className="flex-1 min-w-0 flex flex-col overflow-hidden relative">
             {openInstances.length > 0 && currentInstanceId && (
               <div className="flex items-center justify-between px-4 py-2 bg-emeraldos-950/80 border-b border-platgold-500/30 gap-2 overflow-x-auto shrink-0 backdrop-blur-md">
                 <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
@@ -832,7 +832,7 @@ export default function OfflineApp() {
             {!activeInstance ? (
               <OfflineHomeBackdrop />
             ) : (
-              <div id="offlinePagesContainer" className="flex-1 overflow-y-auto p-4">
+              <div id="offlinePagesContainer" className="flex-1 min-w-0 overflow-y-auto p-3 sm:p-4 lg:p-5">
                 {(() => {
                   const ds = datasets[activeInstance.datasetKey] || activeDataset;
                   if (activeInstance.type === 'dashboard') {

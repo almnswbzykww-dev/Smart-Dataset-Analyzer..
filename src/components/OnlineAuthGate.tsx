@@ -152,10 +152,59 @@ export const OnlineAuthGate: React.FC<OnlineAuthGateProps> = ({ onToast }) => {
 
   return (
     <div
-      className="min-h-screen w-screen emerald-wallpaper relative flex items-center justify-center p-4 overflow-y-auto"
+      className="min-h-screen w-screen emerald-wallpaper relative flex items-center justify-center p-4 overflow-hidden"
       dir="rtl"
     >
-      <div className="relative z-10 w-full max-w-xl glass-panel-emerald emerald-glow-border rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5">
+      {/* Animated Multi-Color Analytical Backdrop Effects Behind Login Card */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden select-none" aria-hidden="true">
+        <div className="cinema-orb-1 absolute -top-28 -right-16 w-[540px] h-[540px] rounded-full bg-rose-500/22 blur-[120px]" />
+        <div className="cinema-orb-2 absolute -bottom-28 -left-16 w-[580px] h-[580px] rounded-full bg-sky-500/22 blur-[130px]" />
+        <div className="cinema-orb-1 absolute top-1/3 left-1/3 w-[420px] h-[420px] rounded-full bg-emerald-500/18 blur-[110px]" />
+
+        <svg
+          className="absolute inset-0 w-full h-full spectrum-lines-anim opacity-55"
+          viewBox="0 0 1440 900"
+          preserveAspectRatio="xMidYMid slice"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id="authWaveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#ef4444" stopOpacity="0.1" />
+              <stop offset="25%" stopColor="#ec4899" stopOpacity="0.85" />
+              <stop offset="50%" stopColor="#e2c974" stopOpacity="0.9" />
+              <stop offset="75%" stopColor="#38bdf8" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#10b981" stopOpacity="0.15" />
+            </linearGradient>
+          </defs>
+          <path
+            className="line-anim"
+            d="M 0 240 Q 320 120 720 240 T 1440 240"
+            fill="none"
+            stroke="url(#authWaveGrad)"
+            strokeWidth="2.2"
+          />
+          <path
+            className="line-anim"
+            d="M 0 680 Q 360 560 720 680 T 1440 680"
+            fill="none"
+            stroke="url(#authWaveGrad)"
+            strokeWidth="2.2"
+          />
+          <g className="cinema-ring-cw" style={{ transformOrigin: '720px 450px' }}>
+            <circle
+              cx="720"
+              cy="450"
+              r="340"
+              fill="none"
+              stroke="url(#authWaveGrad)"
+              strokeWidth="1.6"
+              strokeDasharray="16 12"
+            />
+          </g>
+        </svg>
+      </div>
+
+      <div className="relative z-10 w-full max-w-xl glass-panel-emerald emerald-glow-border rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 my-auto">
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center gap-3 border-b border-platgold-500/25 pb-5">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-950/90 to-emeraldos-950 border border-rose-400/50 flex items-center justify-center shadow-[0_0_24px_rgba(244,63,94,0.4)]">

@@ -64,16 +64,28 @@ class SharedEngineTests(unittest.TestCase):
         finally:
             os.remove(tmp_path)
 
+        sample_logo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
         voucher = build_print_voucher_html(
             title="<script>alert(1)</script>",
             edition_label="Dataset Analyzer Offline",
             voucher_no=generate_voucher_number("BF-TEST"),
-            company={"companyName": "<img src=x onerror=alert(1)>", "location": "صنعاء", "address": "شارع الزبيري"},
+            company={
+                "companyName": "<img src=x onerror=alert(1)>",
+                "location": "صنعاء",
+                "address": "شارع الزبيري",
+                "logoDataUrl": sample_logo,
+            },
             summary_pairs=[("البند", "100")],
+            headers=["A", "B"],
+            rows=[["x", "1"]],
         )
         self.assertIn("سند طباعة رسمي", voucher)
         self.assertNotIn("<script>alert(1)</script>", voucher)
         self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", voucher)
+        self.assertIn("flex-direction: column", voucher)
+        self.assertIn("align-items: center", voucher)
+        self.assertLess(voucher.index('class="company-logo"'), voucher.index("<h1>"))
+        self.assertLess(voucher.index('class="company-logo"'), voucher.index("<table"))
 
 
 class OfflineEditionTests(unittest.TestCase):
